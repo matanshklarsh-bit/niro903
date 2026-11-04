@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1720">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>נירו 903</title>
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f1720;--card:#18222e;--card2:#1f2b39;--line:#2a3746;--tx:#e8eef5;--mut:#8a9aab;
+  --acc:#3ddc97;--acc2:#4aa8ff;--warn:#ffb648;--bad:#ff6b6b;
+  --fuel:#ff8a4c;--charging:#3ddc97;--service:#4aa8ff;--tires:#b48cff;--repair:#ff6b9a;
+  --tolls:#ffd24a;--parking:#5fd3e0;--insurance:#8fa6ff;--license:#c7d36b;--other:#8a9aab;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:Heebo,system-ui,sans-serif;font-size:16px}
+body{padding:env(safe-area-inset-top) 0 calc(78px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 6px}
+header h1{font-size:20px;margin:0;font-weight:800;letter-spacing:.3px}
+header h1 span{color:var(--acc)}
+.sync{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mut)}
+.dot.on{background:var(--acc)}
+main{padding:6px 14px 20px;max-width:640px;margin:0 auto}
+.view{display:none}.view.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.stat .l{font-size:12px;color:var(--mut)}
+.stat .v{font-size:22px;font-weight:800;margin-top:2px}
+.stat .s{font-size:12px;color:var(--mut);margin-top:2px}
+.big{font-size:34px;font-weight:800}
+.mut{color:var(--mut)}.small{font-size:13px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.btn{appearance:none;border:0;border-radius:14px;padding:14px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--card2);color:var(--tx)}
+.btn.pri{background:var(--acc);color:#05261a}
+.btn.blk{display:block;width:100%}
+.btn.sm{padding:8px 12px;font-size:14px;border-radius:10px}
+.hero{display:flex;gap:10px}
+.hero .btn{flex:1;padding:18px 10px;font-size:17px}
+.bar{height:10px;background:var(--card2);border-radius:6px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--acc);border-radius:6px}
+nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,23,32,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:20}
+nav button{flex:1;background:none;border:0;color:var(--mut);font:inherit;font-size:11px;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+nav button svg{width:23px;height:23px}
+nav button.on{color:var(--acc)}
+nav .add{color:#05261a}
+nav .add span.c{width:46px;height:46px;border-radius:50%;background:var(--acc);display:grid;place-items:center;margin-top:-18px;box-shadow:0 4px 18px rgba(61,220,151,.35)}
+label{display:block;font-size:13px;color:var(--mut);margin:12px 0 5px}
+input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:13px 12px;font:inherit;font-size:17px}
+input:focus,select:focus{outline:2px solid var(--acc2);border-color:transparent}
+.seg{display:flex;background:var(--card2);border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;background:none;color:var(--mut);font:inherit;font-weight:600;padding:9px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--card);color:var(--tx)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--card2);color:var(--tx);border-radius:999px;padding:8px 13px;font:inherit;font-size:14px;cursor:pointer}
+.chip.on{border-color:var(--acc);color:var(--acc)}
+.photo{display:flex;gap:10px}
+.photo label.ph{flex:1;margin:0;border:1.5px dashed var(--line);border-radius:14px;padding:16px 8px;text-align:center;color:var(--mut);cursor:pointer;min-height:92px;display:grid;place-items:center;background-size:cover;background-position:center;position:relative}
+.photo label.ph.has{border-style:solid;color:#fff;text-shadow:0 1px 4px #000}
+.photo input{display:none}
+.list .it{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line)}
+.list .it:last-child{border:0}
+.ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:17px;flex-shrink:0}
+.it .t{flex:1;min-width:0}
+.it .t b{display:block;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it .t small{color:var(--mut);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it .a{font-weight:700;white-space:nowrap}
+h2{font-size:16px;margin:0 0 4px}
+h3{font-size:14px;margin:14px 0 6px;color:var(--mut);font-weight:600}
+canvas{max-width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--mut);margin-top:8px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-left:5px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 4px;text-align:right;border-bottom:1px solid var(--line)}
+th{color:var(--mut);font-weight:500;font-size:12px}
+td.n,th.n{text-align:left;font-variant-numeric:tabular-nums}
+tr.tot td{font-weight:800;border-bottom:0}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--card2);border:1px solid var(--line);padding:11px 18px;border-radius:12px;opacity:0;transition:.25s;z-index:50;font-size:14px;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;z-index:40}
+.modal.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:640px;margin:0 auto;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--card2);color:var(--mut)}
+.warn{color:var(--warn)}
+.filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters .chip{white-space:nowrap}
+.ocr{font-size:13px;color:var(--acc2);margin-top:8px;min-height:18px}
+</style>
+</head>
+<body>
+<header>
+  <h1>נירו <span>903</span></h1>
+  <div class="sync" id="sync"><i class="dot" id="syncDot"></i><span id="syncTx">מקומי</span></div>
+</header>
+<main>
+<!-- HOME -->
+<section class="view on" id="v-home">
+  <div class="card">
+    <div class="row"><div><div class="mut small">הוצאות החודש</div><div class="big" id="hMonth">–</div></div>
+    <div style="text-align:left"><div class="mut small">לעומת ממוצע</div><div id="hMonthCmp" style="font-weight:700">–</div></div></div>
+    <div class="legend" id="hMonthLeg"></div>
+  </div>
+  <div class="hero">
+    <button class="btn pri" onclick="openAdd('fill')">⛽ תדלקתי</button>
+    <button class="btn" onclick="openAdd('charge')">⚡ טענתי</button>
+  </div>
+  <div class="card">
+    <div class="row"><div><div class="mut small">טיפול הבא</div><div style="font-size:22px;font-weight:800" id="hSvc">–</div></div>
+    <div style="text-align:left" class="small mut" id="hSvcSub"></div></div>
+    <div class="bar"><i id="hSvcBar" style="width:0"></i></div>
+  </div>
+  <div class="grid">
+    <div class="stat"><div class="l">קילומטראז'</div><div class="v" id="hKm">–</div><div class="s" id="hKmSub"></div></div>
+    <div class="stat"><div class="l">ק"מ לחודש</div><div class="v" id="hKmM">–</div><div class="s">ממוצע 3 חודשים</div></div>
+    <div class="stat"><div class="l">צריכה</div><div class="v" id="hCons">–</div><div class="s" id="hConsSub">ליטר ל־100 ק"מ</div></div>
+    <div class="stat"><div class="l">עלות לק"מ</div><div class="v" id="hCpk">–</div><div class="s">12 חודשים, הכל כלול</div></div>
+  </div>
+  <div class="card" id="hAlerts" style="display:none"></div>
+  <div class="card">
+    <div class="row"><h2>אחרונים</h2><button class="btn sm" onclick="go('list')">הכל</button></div>
+    <div class="list" id="hRecent"></div>
+  </div>
+</section>
+
+<!-- CHARTS -->
+<section class="view" id="v-charts">
+  <div class="seg" id="rangeSeg" style="margin-top:8px">
+    <button data-r="12" class="on">12 חודשים</button><button data-r="24">24</button><button data-r="999">הכל</button>
+  </div>
+  <div class="card"><h2>הוצאות לפי חודש</h2><div style="position:relative;height:230px"><canvas id="cMonthly"></canvas></div><div class="legend" id="lMonthly"></div></div>
+  <div class="card"><h2>לאן הולך הכסף</h2><div style="position:relative;height:330px"><canvas id="cPie"></canvas></div></div>
+  <div class="card"><h2>ק"מ לחודש</h2><div style="position:relative;height:180px"><canvas id="cKm"></canvas></div></div>
+  <div class="card"><h2>עלות לק"מ</h2><div class="mut small">כל ההוצאות חלקי הק"מ באותו חודש</div><div style="position:relative;height:180px"><canvas id="cCpk"></canvas></div></div>
+  <div class="card"><h2>צריכת דלק</h2><div class="mut small">ליטר ל־100 ק"מ · חודשים שבהם הדלק של 903 ידוע</div><div style="position:relative;height:180px"><canvas id="cCons"></canvas></div></div>
+  <div class="card"><h2>חשמל מול דלק</h2><div class="mut small">אחוז הק"מ המשוער על חשמל (לפי 16 קוט"ש ל־100 ק"מ)</div><div style="position:relative;height:180px"><canvas id="cEv"></canvas></div></div>
+  <div class="card"><h2>מחיר ליטר</h2><div style="position:relative;height:170px"><canvas id="cPpl"></canvas></div></div>
+</section>
+
+<!-- LIST -->
+<section class="view" id="v-list">
+  <div class="filters" id="listFilters" style="margin-top:8px"></div>
+  <div class="card"><div class="list" id="listAll"></div><button class="btn blk sm" id="moreBtn" style="margin-top:10px">עוד</button></div>
+</section>
+
+<!-- REPORT -->
+<section class="view" id="v-report">
+  <div class="card">
+    <div class="row"><h2>סיכום שנתי</h2><select id="repYear" style="width:auto;padding:8px 10px;font-size:15px"></select></div>
+    <div class="mut small" style="margin-top:4px">לרואה החשבון · ביטוח ואגרת רישוי פטורים ממע"מ</div>
+    <div id="repTable" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:12px;gap:8px">
+      <button class="btn sm" style="flex:1" onclick="exportCsv(true)">⬇️ הורד CSV</button>
+      <button class="btn sm" style="flex:1" onclick="exportCsv(false)">📋 העתק</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>נתונים</h2>
+    <div class="mut small" id="dataInfo"></div>
+    <div class="row" style="margin-top:12px;gap:8px">
+      <button class="btn sm" style="flex:1" onclick="backup()">גיבוי JSON</button>
+      <button class="btn sm" style="flex:1" id="loginBtn" onclick="login()">התחבר לסנכרון</button>
+    </div>
+  </div>
+</section>
+</main>
+
+<nav>
+  <button data-v="home" class="on" onclick="go('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>בית</button>
+  <button data-v="charts" onclick="go('charts')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>גרפים</button>
+  <button class="add" onclick="openAdd('fill')"><span class="c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg></span></button>
+  <button data-v="list" onclick="go('list')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>היסטוריה</button>
+  <button data-v="report" onclick="go('report')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>דוח</button>
+</nav>
+
+<!-- ADD SHEET -->
+<div class="modal" id="addModal" onclick="if(event.target===this)closeAdd()">
+  <div class="sheet">
+    <div class="row"><h2 id="addTitle">הוספה</h2><button class="btn sm" onclick="closeAdd()">✕</button></div>
+    <div class="chips" id="typeChips" style="margin-top:12px"></div>
+    <form id="addForm" onsubmit="saveAdd(event)">
+      <div id="fillBox">
+        <div class="seg" id="modeSeg" style="margin-top:14px"><button type="button" data-m="manual" class="on">הזנה ידנית</button><button type="button" data-m="photo">📷 צילום</button></div>
+        <div id="photoBox" style="display:none;margin-top:12px">
+          <div class="photo">
+            <label class="ph" id="phOdo">📷<br>לוח מחוונים<input type="file" accept="image/*" capture="environment" data-k="odo"></label>
+            <label class="ph" id="phPump">📷<br>משאבה<input type="file" accept="image/*" capture="environment" data-k="pump"></label>
+          </div>
+          <div class="ocr" id="ocrTx"></div>
+        </div>
+      </div>
+      <label>תאריך</label><input type="datetime-local" id="fDate" required>
+      <div id="kmBox"><label>קילומטראז'</label><input type="number" inputmode="numeric" id="fKm" placeholder="182,450"></div>
+      <div id="litBox"><label>ליטרים</label><input type="number" inputmode="decimal" step="0.01" id="fLit" placeholder="25.00"></div>
+      <div id="kwhBox" style="display:none"><label>קוט"ש</label><input type="number" inputmode="decimal" step="0.01" id="fKwh"></div>
+      <label id="amtLbl">סכום ₪ (כולל מע"מ)</label><input type="number" inputmode="decimal" step="0.01" id="fAmt">
+      <div id="vendBox"><label>ספק / מקום</label><input id="fVend" list="vendList"><datalist id="vendList"></datalist></div>
+      <label>הערה</label><input id="fNote">
+      <div id="fileBox"><label>קובץ חשבונית (PDF / תמונה)</label><input type="file" id="fFile" accept="application/pdf,image/*" style="font-size:14px"></div>
+      <div class="mut small" id="fHint" style="margin-top:8px"></div>
+      <button class="btn pri blk" style="margin-top:16px" type="submit">שמירה</button>
+      <button class="btn blk" style="margin-top:8px;display:none;color:var(--bad)" type="button" id="delBtn" onclick="delItem()">מחיקה</button>
+    </form>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SEED = {"expenses": [{"date": "2023-03-21", "cat": "insurance", "amount": 1254.0, "src": "history", "vendor": "שלמה ביטוח", "note": "חובה עד 2024-02-29"}, {"date": "2023-03-21", "cat": "insurance", "amount": 4311.0, "src": "history", "vendor": "שלמה ביטוח", "note": "מקיף עד 2024-02-29"}, {"date": "2023-03-25", "cat": "parking", "amount": 63.05, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 7}, {"date": "2023-04-19", "cat": "tolls", "amount": 483.26, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 19}, {"date": "2023-04-20", "cat": "tolls", "amount": 54.0, "src": "history", "vendor": "כביש 6 צפון", "trips": 15}, {"date": "2023-04-25", "cat": "parking", "amount": 109.74, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 9}, {"date": "2023-04-28", "cat": "fuel", "amount": 769.35, "src": "history", "liters": 107.81, "vendor": "פאמפי", "monthly": true}, {"date": "2023-04-29", "cat": "parking", "amount": 26.0, "src": "history", "vendor": "פנגו", "note": "חניון Emek hospital", "count": 1}, {"date": "2023-05-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2023-05-19", "cat": "tolls", "amount": 417.22, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 15}, {"date": "2023-05-20", "cat": "tolls", "amount": 65.48, "src": "history", "vendor": "כביש 6 צפון", "trips": 17}, {"date": "2023-05-25", "cat": "parking", "amount": 70.32, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 9}, {"date": "2023-05-28", "cat": "fuel", "amount": 1183.04, "src": "history", "liters": 173.01, "vendor": "פאמפי", "monthly": true}, {"date": "2023-06-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2023-06-08", "cat": "tires", "amount": 1150.0, "src": "history", "vendor": "H.Haviv Tel Aviv", "note": "1x Bridgestone 225/45/18 + repair/balance (discounted)"}, {"date": "2023-06-08", "cat": "parking", "amount": 41.0, "src": "history", "vendor": "פנגו", "note": "חניון Louis Marshall 21", "count": 1}, {"date": "2023-06-19", "cat": "tolls", "amount": 417.22, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 15}, {"date": "2023-06-20", "cat": "tolls", "amount": 55.73, "src": "history", "vendor": "כביש 6 צפון", "trips": 17}, {"date": "2023-06-25", "cat": "parking", "amount": 26.37, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 4}, {"date": "2023-06-28", "cat": "fuel", "amount": 1289.29, "src": "history", "liters": 187.6, "vendor": "פאמפי", "monthly": true}, {"date": "2023-07-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2023-07-12", "cat": "service", "amount": 760.0, "src": "history", "vendor": "Kia Nazareth", "note": "15k service: oil 0W-30 + oil filter", "km": 15170}, {"date": "2023-07-19", "cat": "tolls", "amount": 853.82, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 33}, {"date": "2023-07-20", "cat": "tolls", "amount": 62.86, "src": "history", "vendor": "כביש 6 צפון", "trips": 19}, {"date": "2023-07-24", "cat": "parking", "amount": 13.0, "src": "history", "vendor": "פנגו", "note": "חניון Cinemall", "count": 1}, {"date": "2023-07-25", "cat": "parking", "amount": 14.47, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 5}, {"date": "2023-07-28", "cat": "fuel", "amount": 1772.58, "src": "history", "liters": 258.28, "vendor": "פאמפי", "monthly": true}, {"date": "2023-07-31", "cat": "tolls", "amount": 20.05, "src": "history", "vendor": "מנהרות הכרמל", "trips": 2}, {"date": "2023-08-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2023-08-19", "cat": "tolls", "amount": 570.14, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 22}, {"date": "2023-08-20", "cat": "tolls", "amount": 53.78, "src": "history", "vendor": "כביש 6 צפון", "trips": 17}, {"date": "2023-08-22", "cat": "charging", "amount": 13.2, "src": "history", "kwh": 10.15, "vendor": "EV Edge", "note": "IKEA Kiryat Ata"}, {"date": "2023-08-25", "cat": "parking", "amount": 34.89, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 4}, {"date": "2023-08-28", "cat": "fuel", "amount": 1777.06, "src": "history", "liters": 258.59, "vendor": "פאמפי", "monthly": true}, {"date": "2023-08-28", "cat": "parking", "amount": 226.0, "src": "history", "vendor": "פנגו", "note": "חניון long-term lot east (Tamach?)", "count": 1}, {"date": "2023-09-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2023-09-10", "cat": "charging", "amount": 8.88, "src": "history", "kwh": 4.67, "vendor": "EV Edge", "note": "IKEA Kiryat Ata"}, {"date": "2023-09-11", "cat": "parking", "amount": 71.0, "src": "history", "vendor": "פנגו", "note": "חניון Koresh", "count": 1}, {"date": "2023-09-12", "cat": "parking", "amount": 81.0, "src": "history", "vendor": "פנגו", "note": "חניון Koresh", "count": 1}, {"date": "2023-09-19", "cat": "tolls", "amount": 550.12, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 21}, {"date": "2023-09-19", "cat": "parking", "amount": 76.0, "src": "history", "vendor": "פנגו", "note": "חניון Koresh", "count": 1}, {"date": "2023-09-20", "cat": "tolls", "amount": 38.88, "src": "history", "vendor": "כביש 6 צפון", "trips": 12}, {"date": "2023-09-25", "cat": "parking", "amount": 38.53, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 3}, {"date": "2023-09-28", "cat": "fuel", "amount": 1381.02, "src": "history", "liters": 198.01, "vendor": "פאמפי", "monthly": true}, {"date": "2023-10-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2023-10-06", "cat": "charging", "amount": 22.36, "src": "history", "kwh": 11.31, "vendor": "EV Edge", "note": "Ginzburg 16 Central Park"}, {"date": "2023-10-19", "cat": "tolls", "amount": 433.44, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 18}, {"date": "2023-10-20", "cat": "tolls", "amount": 26.07, "src": "history", "vendor": "כביש 6 צפון", "trips": 7}, {"date": "2023-10-25", "cat": "parking", "amount": 17.02, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 1}, {"date": "2023-10-28", "cat": "fuel", "amount": 554.74, "src": "history", "liters": 78.86, "vendor": "פאמפי", "monthly": true}, {"date": "2023-11-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2023-11-19", "cat": "tolls", "amount": 116.29, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 4}, {"date": "2023-11-20", "cat": "tolls", "amount": 38.34, "src": "history", "vendor": "כביש 6 צפון", "trips": 10}, {"date": "2023-11-27", "cat": "service", "amount": 860.0, "src": "history", "vendor": "Kia Nazareth", "note": "30k service: oil + filters + cabin filter", "km": 30913}, {"date": "2023-11-28", "cat": "fuel", "amount": 1465.94, "src": "history", "liters": 210.34, "vendor": "פאמפי", "monthly": true}, {"date": "2023-12-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2023-12-10", "cat": "tires", "amount": 50.0, "src": "history", "vendor": "Tzmigei HaAmakim", "note": "פנצ'ר"}, {"date": "2023-12-19", "cat": "tolls", "amount": 485.57, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 19}, {"date": "2023-12-20", "cat": "tolls", "amount": 35.01, "src": "history", "vendor": "כביש 6 צפון", "trips": 11}, {"date": "2023-12-28", "cat": "fuel", "amount": 773.44, "src": "history", "liters": 110.45, "vendor": "פאמפי", "monthly": true}, {"date": "2023-12-31", "cat": "tolls", "amount": 10.11, "src": "history", "vendor": "מנהרות הכרמל", "trips": 1}, {"date": "2024-01-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-01-09", "cat": "parking", "amount": 27.0, "src": "history", "vendor": "פנגו", "note": "חניון Nof HaGalil courts", "count": 1}, {"date": "2024-01-18", "cat": "charging", "amount": 21.29, "src": "history", "kwh": 10.72, "vendor": "EV Edge", "note": "Leo Goldberg Central Park"}, {"date": "2024-01-19", "cat": "tolls", "amount": 232.57, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 9}, {"date": "2024-01-20", "cat": "tolls", "amount": 53.26, "src": "history", "vendor": "כביש 6 צפון", "trips": 16}, {"date": "2024-01-25", "cat": "parking", "amount": 30.37, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 2}, {"date": "2024-01-28", "cat": "fuel", "amount": 1421.56, "src": "history", "liters": 196.01, "vendor": "פאמפי", "monthly": true}, {"date": "2024-02-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-02-02", "cat": "tires", "amount": 50.0, "src": "history", "vendor": "Tzmigei HaAmakim", "note": "פנצ'ר"}, {"date": "2024-02-03", "cat": "parking", "amount": 25.0, "src": "history", "vendor": "פנגו", "note": "חניון Reading West", "count": 1}, {"date": "2024-02-19", "cat": "tolls", "amount": 826.16, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 29}, {"date": "2024-02-20", "cat": "tolls", "amount": 106.41, "src": "history", "vendor": "כביש 6 צפון", "trips": 29}, {"date": "2024-02-25", "cat": "parking", "amount": 23.9, "src": "history", "vendor": "פנגו", "note": "חניון Azrieli TA", "count": 1}, {"date": "2024-02-25", "cat": "parking", "amount": 43.86, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 2}, {"date": "2024-02-28", "cat": "fuel", "amount": 1866.68, "src": "history", "liters": 252.15, "vendor": "פאמפי", "monthly": true}, {"date": "2024-03-01", "cat": "insurance", "amount": 1433.0, "src": "history", "vendor": "שלמה ביטוח", "note": "חובה עד 2025-02-28"}, {"date": "2024-03-01", "cat": "insurance", "amount": 4429.0, "src": "history", "vendor": "שלמה ביטוח", "note": "מקיף עד 2025-02-28"}, {"date": "2024-03-01", "cat": "insurance", "amount": 1238.0, "src": "history", "vendor": "שלמה סיקסט", "note": "שירותי דרך עד 2025-02-28"}, {"date": "2024-03-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-03-19", "cat": "tolls", "amount": 380.11, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 15}, {"date": "2024-03-20", "cat": "tolls", "amount": 50.89, "src": "history", "vendor": "כביש 6 צפון", "trips": 14}, {"date": "2024-03-25", "cat": "parking", "amount": 4.76, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 3}, {"date": "2024-03-28", "cat": "fuel", "amount": 1189.83, "src": "history", "liters": 157.54, "vendor": "פאמפי", "monthly": true}, {"date": "2024-03-31", "cat": "license", "amount": 2510.0, "src": "history", "vendor": "משרד התחבורה", "note": "אגרת רישוי עד 2025-03-18"}, {"date": "2024-04-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-04-09", "cat": "service", "amount": 1050.0, "src": "history", "vendor": "Kia Nazareth", "note": "45k service: oil + filters + engine air filter", "km": 46728}, {"date": "2024-04-14", "cat": "parking", "amount": 18.9, "src": "history", "vendor": "פנגו", "note": "חניון Azrieli TA", "count": 1}, {"date": "2024-04-18", "cat": "parking", "amount": 125.0, "src": "history", "vendor": "פנגו", "note": "חניון Rothschild 1", "count": 1}, {"date": "2024-04-19", "cat": "tolls", "amount": 414.39, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 14}, {"date": "2024-04-20", "cat": "tolls", "amount": 62.3, "src": "history", "vendor": "כביש 6 צפון", "trips": 16}, {"date": "2024-04-25", "cat": "parking", "amount": 55.59, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 7}, {"date": "2024-04-28", "cat": "fuel", "amount": 1551.1, "src": "history", "liters": 200.1, "vendor": "פאמפי", "monthly": true}, {"date": "2024-05-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-05-05", "cat": "tires", "amount": 50.0, "src": "history", "vendor": "Tzmigei HaAmakim", "note": "פנצ'ר"}, {"date": "2024-05-19", "cat": "tolls", "amount": 265.75, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 10}, {"date": "2024-05-20", "cat": "tolls", "amount": 49.12, "src": "history", "vendor": "כביש 6 צפון", "trips": 14}, {"date": "2024-05-25", "cat": "parking", "amount": 127.16, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 4}, {"date": "2024-05-27", "cat": "tolls", "amount": 14.6, "src": "history", "vendor": "כביש 6 צפון (פנגו)", "trips": 4}, {"date": "2024-05-28", "cat": "fuel", "amount": 1615.43, "src": "history", "liters": 203.66, "vendor": "פאמפי", "monthly": true}, {"date": "2024-06-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-06-06", "cat": "parking", "amount": 119.9, "src": "history", "vendor": "פנגו", "note": "חניון Amudim", "count": 1}, {"date": "2024-06-09", "cat": "tires", "amount": 50.0, "src": "history", "vendor": "Tzmigei HaAmakim", "note": "פנצ'ר"}, {"date": "2024-06-19", "cat": "tolls", "amount": 856.87, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 29}, {"date": "2024-06-20", "cat": "tolls", "amount": 123.42, "src": "history", "vendor": "כביש 6 צפון", "trips": 33}, {"date": "2024-06-25", "cat": "parking", "amount": 34.29, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 3}, {"date": "2024-06-27", "cat": "tolls", "amount": 18.58, "src": "history", "vendor": "כביש 6 צפון (פנגו)", "trips": 4}, {"date": "2024-06-28", "cat": "fuel", "amount": 1582.49, "src": "history", "liters": 209.65, "vendor": "פאמפי", "monthly": true}, {"date": "2024-07-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-07-19", "cat": "service", "amount": 900.0, "src": "history", "vendor": "Kia Nazareth", "note": "60k service: oil + filters", "km": 60585}, {"date": "2024-07-19", "cat": "tolls", "amount": 668.37, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 22}, {"date": "2024-07-20", "cat": "tolls", "amount": 112.16, "src": "history", "vendor": "כביש 6 צפון", "trips": 31}, {"date": "2024-07-22", "cat": "parking", "amount": 31.0, "src": "history", "vendor": "פנגו", "note": "חניון Reading West", "count": 1}, {"date": "2024-07-25", "cat": "parking", "amount": 46.93, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 5}, {"date": "2024-07-28", "cat": "fuel", "amount": 2092.22, "src": "history", "liters": 276.06, "vendor": "פאמפי", "monthly": true}, {"date": "2024-08-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-08-06", "cat": "parking", "amount": 19.9, "src": "history", "vendor": "פנגו", "note": "חניון Safra Square", "count": 1}, {"date": "2024-08-19", "cat": "tolls", "amount": 1033.88, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 38}, {"date": "2024-08-20", "cat": "tolls", "amount": 105.55, "src": "history", "vendor": "כביש 6 צפון", "trips": 30}, {"date": "2024-08-23", "cat": "parking", "amount": 41.9, "src": "history", "vendor": "פנגו", "note": "חניון HaShuk", "count": 1}, {"date": "2024-08-25", "cat": "parking", "amount": 4.2, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 1}, {"date": "2024-08-28", "cat": "fuel", "amount": 1371.16, "src": "history", "liters": 182.49, "vendor": "פאמפי", "monthly": true}, {"date": "2024-09-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-09-17", "cat": "charging", "amount": 9.37, "src": "history", "kwh": 6.942, "vendor": "EV Edge"}, {"date": "2024-09-19", "cat": "tolls", "amount": 414.98, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 15}, {"date": "2024-09-20", "cat": "tolls", "amount": 91.56, "src": "history", "vendor": "כביש 6 צפון", "trips": 24}, {"date": "2024-09-25", "cat": "parking", "amount": 147.4, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 7}, {"date": "2024-09-28", "cat": "fuel", "amount": 1536.99, "src": "history", "liters": 209.74, "vendor": "פאמפי", "monthly": true}, {"date": "2024-10-01", "cat": "tires", "amount": 200.0, "src": "history", "vendor": "Tzmigei HaAmakim", "note": "balancing x4"}, {"date": "2024-10-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-10-19", "cat": "tolls", "amount": 476.4, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 17}, {"date": "2024-10-20", "cat": "tolls", "amount": 83.14, "src": "history", "vendor": "כביש 6 צפון", "trips": 23}, {"date": "2024-10-25", "cat": "parking", "amount": 8.21, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 1}, {"date": "2024-10-28", "cat": "fuel", "amount": 1537.11, "src": "history", "liters": 213.56, "vendor": "פאמפי", "monthly": true}, {"date": "2024-11-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-11-19", "cat": "tolls", "amount": 733.52, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 24}, {"date": "2024-11-20", "cat": "service", "amount": 800.0, "src": "history", "vendor": "Kia Nazareth", "note": "75k service: oil + filter", "km": 76942}, {"date": "2024-11-20", "cat": "tolls", "amount": 98.02, "src": "history", "vendor": "כביש 6 צפון", "trips": 26}, {"date": "2024-11-25", "cat": "parking", "amount": 200.7, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 11}, {"date": "2024-11-28", "cat": "fuel", "amount": 1250.89, "src": "history", "liters": 172.63, "vendor": "פאמפי", "monthly": true}, {"date": "2024-12-01", "cat": "other", "amount": 24.0, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2024-12-05", "cat": "parking", "amount": 43.9, "src": "history", "vendor": "פנגו", "note": "חניון Rogovin Netanya", "count": 1}, {"date": "2024-12-18", "cat": "charging", "amount": 4.44, "src": "history", "kwh": 10.499, "vendor": "EV Edge", "note": "Machsanei Hashuk Beer Sheva"}, {"date": "2024-12-19", "cat": "tolls", "amount": 676.04, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 23}, {"date": "2024-12-20", "cat": "tolls", "amount": 95.28, "src": "history", "vendor": "כביש 6 צפון", "trips": 25}, {"date": "2024-12-25", "cat": "parking", "amount": 79.58, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 5}, {"date": "2024-12-28", "cat": "fuel", "amount": 2025.47, "src": "history", "liters": 283.35, "vendor": "פאמפי", "monthly": true}, {"date": "2024-12-28", "cat": "parking", "amount": 106.9, "src": "history", "vendor": "פנגו", "note": "חניון Dubnov 3", "count": 1}, {"date": "2024-12-28", "cat": "parking", "amount": 55.9, "src": "history", "vendor": "פנגו", "note": "חניון Gan Ha'ir", "count": 1}, {"date": "2024-12-29", "cat": "parking", "amount": 31.9, "src": "history", "vendor": "פנגו", "note": "חניון Nirim", "count": 1}, {"date": "2025-01-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-01-02", "cat": "tolls", "amount": 41.84, "src": "history", "vendor": "מנהרות הכרמל", "trips": 4}, {"date": "2025-01-06", "cat": "charging", "amount": 40.0, "src": "history", "vendor": "EV Edge", "note": "צ'יפ חכם + משלוח"}, {"date": "2025-01-09", "cat": "charging", "amount": 15.75, "src": "history", "kwh": 8.974, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-11", "cat": "charging", "amount": 16.87, "src": "history", "kwh": 9.614, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-13", "cat": "charging", "amount": 11.88, "src": "history", "kwh": 10.6, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-14", "cat": "charging", "amount": 11.84, "src": "history", "kwh": 10.56, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-15", "cat": "charging", "amount": 11.1, "src": "history", "kwh": 10.57, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-16", "cat": "charging", "amount": 10.9, "src": "history", "kwh": 10.381, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-16", "cat": "parking", "amount": 6.9, "src": "history", "vendor": "פנגו", "note": "חניון Melcha", "count": 1}, {"date": "2025-01-19", "cat": "tolls", "amount": 961.56, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 32}, {"date": "2025-01-20", "cat": "charging", "amount": 11.13, "src": "history", "kwh": 10.602, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-20", "cat": "tolls", "amount": 54.84, "src": "history", "vendor": "כביש 6 צפון", "trips": 14}, {"date": "2025-01-20", "cat": "tolls", "amount": 82.92, "src": "history", "vendor": "כביש 6 צפון", "trips": 21}, {"date": "2025-01-21", "cat": "charging", "amount": 11.1, "src": "history", "kwh": 10.57, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-22", "cat": "charging", "amount": 11.15, "src": "history", "kwh": 10.621, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-25", "cat": "parking", "amount": 39.08, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 2}, {"date": "2025-01-26", "cat": "charging", "amount": 11.1, "src": "history", "kwh": 10.572, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-27", "cat": "charging", "amount": 11.25, "src": "history", "kwh": 10.714, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-28", "cat": "fuel", "amount": 1416.85, "src": "history", "liters": 195.66, "vendor": "פאמפי", "monthly": true}, {"date": "2025-01-29", "cat": "charging", "amount": 11.06, "src": "history", "kwh": 10.53, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-01-30", "cat": "charging", "amount": 11.09, "src": "history", "kwh": 10.561, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-02-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-02-02", "cat": "charging", "amount": 11.22, "src": "history", "kwh": 10.688, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-02-03", "cat": "charging", "amount": 11.06, "src": "history", "kwh": 10.535, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-02-04", "cat": "charging", "amount": 10.97, "src": "history", "kwh": 10.45, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-02-04", "cat": "parking", "amount": 66.9, "src": "history", "vendor": "פנגו", "note": "חניון HaBarzel 2", "count": 1}, {"date": "2025-02-07", "cat": "charging", "amount": 10.57, "src": "history", "kwh": 10.069, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-02-10", "cat": "parking", "amount": 61.9, "src": "history", "vendor": "פנגו", "note": "חניון HaBarzel 22", "count": 1}, {"date": "2025-02-11", "cat": "parking", "amount": 25.9, "src": "history", "vendor": "פנגו", "note": "חניון Campus", "count": 1}, {"date": "2025-02-14", "cat": "tires", "amount": 50.0, "src": "history", "vendor": "Top Wheels Afula", "note": "פנצ'ר"}, {"date": "2025-02-18", "cat": "charging", "amount": 10.92, "src": "history", "kwh": 10.404, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-02-19", "cat": "tolls", "amount": 865.38, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 28}, {"date": "2025-02-20", "cat": "tolls", "amount": 81.51, "src": "history", "vendor": "כביש 6 צפון", "trips": 22}, {"date": "2025-02-23", "cat": "charging", "amount": 11.04, "src": "history", "kwh": 10.513, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-02-24", "cat": "charging", "amount": 11.08, "src": "history", "kwh": 10.55, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-02-25", "cat": "parking", "amount": 27.0, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 4}, {"date": "2025-02-27", "cat": "charging", "amount": 11.2, "src": "history", "kwh": 10.667, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-02-28", "cat": "fuel", "amount": 1300.82, "src": "history", "liters": 176.85, "vendor": "פאמפי", "monthly": true}, {"date": "2025-03-01", "cat": "insurance", "amount": 1402.0, "src": "history", "vendor": "שלמה ביטוח", "note": "חובה עד 2026-02-28"}, {"date": "2025-03-01", "cat": "insurance", "amount": 5491.0, "src": "history", "vendor": "שלמה ביטוח", "note": "מקיף עד 2026-02-28"}, {"date": "2025-03-01", "cat": "insurance", "amount": 1286.0, "src": "history", "vendor": "שלמה סיקסט", "note": "שירותי דרך עד 2026-02-28"}, {"date": "2025-03-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-03-02", "cat": "charging", "amount": 11.24, "src": "history", "kwh": 10.704, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-03", "cat": "charging", "amount": 11.13, "src": "history", "kwh": 10.599, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-04", "cat": "charging", "amount": 11.02, "src": "history", "kwh": 10.495, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-05", "cat": "charging", "amount": 10.98, "src": "history", "kwh": 10.461, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-05", "cat": "parking", "amount": 131.9, "src": "history", "vendor": "פנגו", "note": "חניון Orion", "count": 1}, {"date": "2025-03-06", "cat": "charging", "amount": 10.92, "src": "history", "kwh": 10.402, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-06", "cat": "tires", "amount": 60.0, "src": "history", "vendor": "Tzmigei HaAmakim", "note": "פנצ'ר"}, {"date": "2025-03-07", "cat": "charging", "amount": 10.81, "src": "history", "kwh": 10.293, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-09", "cat": "charging", "amount": 10.98, "src": "history", "kwh": 10.454, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-10", "cat": "charging", "amount": 11.19, "src": "history", "kwh": 10.654, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-12", "cat": "charging", "amount": 10.98, "src": "history", "kwh": 10.457, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-13", "cat": "service", "amount": 1150.0, "src": "history", "vendor": "Kia Nazareth", "note": "90k service: oil + filters + air + cabin", "km": 95567}, {"date": "2025-03-16", "cat": "charging", "amount": 11.36, "src": "history", "kwh": 10.82, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-17", "cat": "charging", "amount": 11.21, "src": "history", "kwh": 10.679, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-18", "cat": "charging", "amount": 11.15, "src": "history", "kwh": 10.62, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-19", "cat": "charging", "amount": 10.99, "src": "history", "kwh": 10.467, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-19", "cat": "tolls", "amount": 703.87, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 23}, {"date": "2025-03-20", "cat": "tolls", "amount": 109.83, "src": "history", "vendor": "כביש 6 צפון", "trips": 30}, {"date": "2025-03-21", "cat": "charging", "amount": 9.57, "src": "history", "kwh": 9.116, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-21", "cat": "tires", "amount": 60.0, "src": "history", "vendor": "Tzmigei HaAmakim", "note": "פנצ'ר"}, {"date": "2025-03-23", "cat": "charging", "amount": 11.02, "src": "history", "kwh": 10.496, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-03-28", "cat": "fuel", "amount": 1549.55, "src": "history", "liters": 213.21, "vendor": "פאמפי", "monthly": true}, {"date": "2025-03-28", "cat": "license", "amount": 2444.0, "src": "history", "vendor": "משרד התחבורה", "note": "אגרת רישוי עד 2026-03-18"}, {"date": "2025-04-01", "cat": "charging", "amount": 11.27, "src": "history", "kwh": 10.73, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-04-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-04-02", "cat": "charging", "amount": 11.09, "src": "history", "kwh": 10.561, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-04-05", "cat": "charging", "amount": 11.03, "src": "history", "kwh": 10.504, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-04-05", "cat": "tires", "amount": 4833.6, "src": "history", "vendor": "ACE / Multi Retail", "note": "4x Continental 225/45/18 incl fitting", "km": 99060}, {"date": "2025-04-09", "cat": "charging", "amount": 11.3, "src": "history", "kwh": 10.763, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-04-16", "cat": "charging", "amount": 11.15, "src": "history", "kwh": 10.621, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-04-17", "cat": "charging", "amount": 11.29, "src": "history", "kwh": 10.756, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-04-19", "cat": "tolls", "amount": 831.45, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 27}, {"date": "2025-04-20", "cat": "tolls", "amount": 87.87, "src": "history", "vendor": "כביש 6 צפון", "trips": 22}, {"date": "2025-04-22", "cat": "charging", "amount": 11.39, "src": "history", "kwh": 10.845, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-04-25", "cat": "parking", "amount": 99.26, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 9}, {"date": "2025-04-28", "cat": "fuel", "amount": 1940.25, "src": "history", "liters": 264.32, "vendor": "פאמפי", "monthly": true}, {"date": "2025-05-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-05-19", "cat": "tolls", "amount": 677.87, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 24}, {"date": "2025-05-20", "cat": "tolls", "amount": 119.14, "src": "history", "vendor": "כביש 6 צפון", "trips": 31}, {"date": "2025-05-25", "cat": "parking", "amount": 16.12, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 2}, {"date": "2025-05-28", "cat": "fuel", "amount": 1349.67, "src": "history", "liters": 188.16, "vendor": "פאמפי", "monthly": true}, {"date": "2025-06-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-06-19", "cat": "tolls", "amount": 829.98, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 27}, {"date": "2025-06-20", "cat": "tolls", "amount": 94.21, "src": "history", "vendor": "כביש 6 צפון", "trips": 25}, {"date": "2025-06-28", "cat": "fuel", "amount": 1943.6, "src": "history", "liters": 271.08, "vendor": "פאמפי", "monthly": true}, {"date": "2025-06-29", "cat": "charging", "amount": 11.19, "src": "history", "kwh": 10.655, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-06-30", "cat": "charging", "amount": 11.17, "src": "history", "kwh": 10.636, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-07-02", "cat": "charging", "amount": 11.2, "src": "history", "kwh": 10.67, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-02", "cat": "charging", "amount": 4.72, "src": "history", "kwh": 4.494, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-03", "cat": "charging", "amount": 11.23, "src": "history", "kwh": 10.694, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-04", "cat": "charging", "amount": 10.83, "src": "history", "kwh": 10.313, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-05", "cat": "charging", "amount": 10.98, "src": "history", "kwh": 10.454, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-06", "cat": "charging", "amount": 11.33, "src": "history", "kwh": 10.789, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-07", "cat": "charging", "amount": 10.93, "src": "history", "kwh": 10.411, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-07", "cat": "service", "amount": 890.0, "src": "history", "vendor": "Kia Nazareth", "note": "105k service: oil + filter", "km": 113361}, {"date": "2025-07-08", "cat": "charging", "amount": 11.46, "src": "history", "kwh": 10.917, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-09", "cat": "charging", "amount": 11.43, "src": "history", "kwh": 10.89, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-10", "cat": "charging", "amount": 11.32, "src": "history", "kwh": 10.782, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-13", "cat": "charging", "amount": 11.24, "src": "history", "kwh": 10.705, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-14", "cat": "charging", "amount": 11.01, "src": "history", "kwh": 10.486, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-15", "cat": "charging", "amount": 11.23, "src": "history", "kwh": 10.694, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-16", "cat": "charging", "amount": 10.88, "src": "history", "kwh": 10.362, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-17", "cat": "charging", "amount": 11.17, "src": "history", "kwh": 10.637, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-19", "cat": "tolls", "amount": 604.43, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 22}, {"date": "2025-07-20", "cat": "charging", "amount": 10.89, "src": "history", "kwh": 10.371, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-20", "cat": "tolls", "amount": 94.9, "src": "history", "vendor": "כביש 6 צפון", "trips": 26}, {"date": "2025-07-22", "cat": "charging", "amount": 11.4, "src": "history", "kwh": 10.857, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-23", "cat": "charging", "amount": 11.35, "src": "history", "kwh": 10.806, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-24", "cat": "charging", "amount": 11.18, "src": "history", "kwh": 10.649, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-27", "cat": "charging", "amount": 10.76, "src": "history", "kwh": 10.25, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-28", "cat": "fuel", "amount": 1552.9, "src": "history", "liters": 216.06, "vendor": "פאמפי", "monthly": true}, {"date": "2025-07-28", "cat": "charging", "amount": 10.98, "src": "history", "kwh": 10.455, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-29", "cat": "charging", "amount": 11.23, "src": "history", "kwh": 10.697, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-30", "cat": "charging", "amount": 11.43, "src": "history", "kwh": 10.884, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-07-31", "cat": "charging", "amount": 11.05, "src": "history", "kwh": 10.524, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-08-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-08-03", "cat": "charging", "amount": 11.17, "src": "history", "kwh": 10.642, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-08-04", "cat": "charging", "amount": 11.22, "src": "history", "kwh": 10.69, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-08-06", "cat": "charging", "amount": 11.59, "src": "history", "kwh": 11.035, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-08-19", "cat": "tolls", "amount": 665.18, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 24}, {"date": "2025-08-20", "cat": "tolls", "amount": 91.44, "src": "history", "vendor": "כביש 6 צפון", "trips": 24}, {"date": "2025-08-25", "cat": "parking", "amount": 68.77, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 6}, {"date": "2025-08-28", "cat": "fuel", "amount": 1719.86, "src": "history", "liters": 242.12, "vendor": "פאמפי", "monthly": true}, {"date": "2025-09-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-09-16", "cat": "parking", "amount": 131.9, "src": "history", "vendor": "פנגו", "note": "חניון Orion", "count": 1}, {"date": "2025-09-19", "cat": "tolls", "amount": 804.93, "src": "history", "vendor": "כביש 6 (דרך ארץ)"}, {"date": "2025-09-20", "cat": "tolls", "amount": 72.74, "src": "history", "vendor": "כביש 6 צפון", "trips": 21}, {"date": "2025-09-23", "cat": "charging", "amount": 22.38, "src": "history", "kwh": 10.732, "vendor": "EV Edge", "note": "Jaffa port (Yehuda Hayamit 1)"}, {"date": "2025-09-25", "cat": "parking", "amount": 8.86, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 5}, {"date": "2025-09-28", "cat": "fuel", "amount": 1511.34, "src": "history", "liters": 209.66, "vendor": "פאמפי", "monthly": true}, {"date": "2025-10-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-10-18", "cat": "service", "amount": 1040.0, "src": "history", "vendor": "Kia Nazareth", "note": "120k service: oil + filters + cabin", "km": 127190}, {"date": "2025-10-19", "cat": "tolls", "amount": 273.59, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 10}, {"date": "2025-10-20", "cat": "tolls", "amount": 39.06, "src": "history", "vendor": "כביש 6 צפון", "trips": 11}, {"date": "2025-10-28", "cat": "fuel", "amount": 760.91, "src": "history", "liters": 105.39, "vendor": "פאמפי", "note": "903 בלבד · 4 תדלוקים", "monthly": true}, {"date": "2025-11-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-11-02", "cat": "charging", "amount": 5.57, "src": "history", "kwh": 5.302, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-02", "cat": "charging", "amount": 11.39, "src": "history", "kwh": 10.843, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-04", "cat": "charging", "amount": 11.02, "src": "history", "kwh": 10.498, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-05", "cat": "charging", "amount": 3.88, "src": "history", "kwh": 3.698, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-05", "cat": "charging", "amount": 10.7, "src": "history", "kwh": 10.188, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-06", "cat": "charging", "amount": 10.53, "src": "history", "kwh": 10.028, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-07", "cat": "charging", "amount": 10.71, "src": "history", "kwh": 10.198, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-09", "cat": "charging", "amount": 11.1, "src": "history", "kwh": 10.572, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-09", "cat": "parking", "amount": 131.9, "src": "history", "vendor": "פנגו", "note": "חניון Orion", "count": 1}, {"date": "2025-11-10", "cat": "charging", "amount": 11.18, "src": "history", "kwh": 10.643, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-11", "cat": "charging", "amount": 10.78, "src": "history", "kwh": 10.266, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-12", "cat": "charging", "amount": 11.2, "src": "history", "kwh": 10.663, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-13", "cat": "charging", "amount": 11.0, "src": "history", "kwh": 10.472, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-17", "cat": "charging", "amount": 11.12, "src": "history", "kwh": 10.589, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-18", "cat": "parking", "amount": 126.9, "src": "history", "vendor": "פנגו", "note": "חניון Shamai 10 (Mishkenot)", "count": 1}, {"date": "2025-11-19", "cat": "charging", "amount": 11.14, "src": "history", "kwh": 10.605, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-19", "cat": "tolls", "amount": 653.45, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 21}, {"date": "2025-11-20", "cat": "charging", "amount": 11.23, "src": "history", "kwh": 10.697, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-20", "cat": "tolls", "amount": 90.27, "src": "history", "vendor": "כביש 6 צפון", "trips": 25}, {"date": "2025-11-22", "cat": "parking", "amount": 38.0, "src": "history", "vendor": "פנגו", "note": "חניון Jaffa port", "count": 1}, {"date": "2025-11-23", "cat": "charging", "amount": 11.11, "src": "history", "kwh": 10.58, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-23", "cat": "parking", "amount": 171.9, "src": "history", "vendor": "פנגו", "note": "חניון Shamai 10 (Mishkenot)", "count": 1}, {"date": "2025-11-24", "cat": "charging", "amount": 10.99, "src": "history", "kwh": 10.469, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-25", "cat": "charging", "amount": 10.77, "src": "history", "kwh": 10.258, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-26", "cat": "charging", "amount": 11.17, "src": "history", "kwh": 10.64, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-27", "cat": "charging", "amount": 10.83, "src": "history", "kwh": 10.314, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-11-27", "cat": "parking", "amount": 171.9, "src": "history", "vendor": "פנגו", "note": "חניון Shamai 10 (Mishkenot)", "count": 1}, {"date": "2025-11-28", "cat": "fuel", "amount": 1981.8, "src": "history", "liters": 280.71, "vendor": "פאמפי", "note": "903 בלבד · 11 תדלוקים", "monthly": true}, {"date": "2025-11-30", "cat": "charging", "amount": 11.14, "src": "history", "kwh": 10.608, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-12-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2025-12-02", "cat": "charging", "amount": 11.11, "src": "history", "kwh": 10.578, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-12-03", "cat": "charging", "amount": 11.1, "src": "history", "kwh": 10.573, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-12-05", "cat": "charging", "amount": 10.93, "src": "history", "kwh": 10.412, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-12-08", "cat": "charging", "amount": 11.26, "src": "history", "kwh": 10.726, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-12-08", "cat": "parking", "amount": 20.5, "src": "history", "vendor": "פנגו", "note": "חניון Rami Levy Ramat HaHayal", "count": 1}, {"date": "2025-12-09", "cat": "charging", "amount": 10.96, "src": "history", "kwh": 10.438, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-12-09", "cat": "parking", "amount": 25.9, "src": "history", "vendor": "פנגו", "note": "חניון Rami Levy Ramat HaHayal", "count": 1}, {"date": "2025-12-10", "cat": "parking", "amount": 50.9, "src": "history", "vendor": "פנגו", "note": "חניון Agripas", "count": 1}, {"date": "2025-12-14", "cat": "charging", "amount": 11.09, "src": "history", "kwh": 10.566, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-12-17", "cat": "parking", "amount": 18.7, "src": "history", "vendor": "פנגו", "note": "חניון Azrieli TA", "count": 1}, {"date": "2025-12-19", "cat": "tolls", "amount": 873.4, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 29}, {"date": "2025-12-20", "cat": "tolls", "amount": 106.61, "src": "history", "vendor": "כביש 6 צפון", "trips": 29}, {"date": "2025-12-25", "cat": "parking", "amount": 59.72, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 5}, {"date": "2025-12-26", "cat": "charging", "amount": 10.82, "src": "history", "kwh": 10.302, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2025-12-28", "cat": "fuel", "amount": 1474.87, "src": "history", "liters": 207.73, "vendor": "פאמפי", "note": "903 בלבד · 8 תדלוקים", "monthly": true}, {"date": "2025-12-31", "cat": "tolls", "amount": 11.89, "src": "history", "vendor": "מנהרות הכרמל", "trips": 1}, {"date": "2026-01-01", "cat": "other", "amount": 24.2, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור"}, {"date": "2026-01-19", "cat": "tolls", "amount": 524.98, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 18}, {"date": "2026-01-20", "cat": "tolls", "amount": 95.24, "src": "history", "vendor": "כביש 6 צפון", "trips": 26}, {"date": "2026-01-25", "cat": "parking", "amount": 59.68, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 6}, {"date": "2026-01-28", "cat": "fuel", "amount": 1987.27, "src": "history", "liters": 290.54, "vendor": "פאמפי", "note": "903 בלבד · 11 תדלוקים", "monthly": true}, {"date": "2026-01-29", "cat": "repair", "amount": 300.0, "src": "history", "vendor": "Kia Nazareth", "note": "inspection only (no oil change)", "km": 144818}, {"date": "2026-02-01", "cat": "other", "amount": 17.29, "src": "history", "vendor": "פוינטר", "note": "מנוי איתור (חלקי)"}, {"date": "2026-02-04", "cat": "charging", "amount": 11.05, "src": "history", "kwh": 10.523, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2026-02-19", "cat": "tolls", "amount": 600.95, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 21}, {"date": "2026-02-19", "cat": "parking", "amount": 31.9, "src": "history", "vendor": "פנגו", "note": "חניון Menora", "count": 1}, {"date": "2026-02-20", "cat": "repair", "amount": 60.0, "src": "history", "vendor": "Kia Nazareth", "note": "HB3 bulb"}, {"date": "2026-02-20", "cat": "tolls", "amount": 93.14, "src": "history", "vendor": "כביש 6 צפון", "trips": 25}, {"date": "2026-02-25", "cat": "parking", "amount": 54.63, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 6}, {"date": "2026-02-28", "cat": "fuel", "amount": 1353.84, "src": "history", "liters": 197.06, "vendor": "פאמפי", "note": "903 בלבד · 7 תדלוקים", "monthly": true}, {"date": "2026-03-01", "cat": "insurance", "amount": 1453.0, "src": "history", "vendor": "הראל", "note": "חובה עד 2027-02-28"}, {"date": "2026-03-01", "cat": "insurance", "amount": 6124.0, "src": "history", "vendor": "הראל", "note": "מקיף עד 2027-02-28"}, {"date": "2026-03-05", "cat": "license", "amount": 2199.0, "src": "history", "vendor": "משרד התחבורה", "note": "אגרת רישוי עד 2027-03-18"}, {"date": "2026-03-10", "cat": "charging", "amount": 12.66, "src": "history", "kwh": 10.5, "vendor": "EV Edge", "note": "Ramat Gan (Rashi 31)"}, {"date": "2026-03-11", "cat": "charging", "amount": 90.74, "src": "history", "kwh": 10.6, "vendor": "EV Edge", "note": "Ramat Gan (Rashi 31)"}, {"date": "2026-03-11", "cat": "parking", "amount": 15.5, "src": "history", "vendor": "פנגו", "note": "חניון Azrieli TA", "count": 1}, {"date": "2026-03-19", "cat": "tolls", "amount": 254.81, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 9}, {"date": "2026-03-20", "cat": "tolls", "amount": 47.62, "src": "history", "vendor": "כביש 6 צפון", "trips": 13}, {"date": "2026-03-25", "cat": "parking", "amount": 98.56, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 3}, {"date": "2026-03-28", "cat": "fuel", "amount": 771.33, "src": "history", "liters": 110.03, "vendor": "פאמפי", "note": "903 בלבד · 4 תדלוקים", "monthly": true}, {"date": "2026-03-28", "cat": "charging", "amount": 15.25, "src": "history", "kwh": 10.458, "vendor": "Sonol EVI", "note": "Kibbutz Dalia"}, {"date": "2026-04-16", "cat": "service", "amount": 1800.0, "src": "history", "vendor": "Kia Nazareth", "note": "150k service: oil + filters + 4 spark plugs + wipers", "km": 153662}, {"date": "2026-04-19", "cat": "tolls", "amount": 220.25, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 8}, {"date": "2026-04-20", "cat": "tolls", "amount": 87.72, "src": "history", "vendor": "כביש 6 צפון", "trips": 22}, {"date": "2026-04-24", "cat": "parking", "amount": 49.33, "src": "history", "vendor": "פנגו", "note": "חניון HaTarbut", "count": 1}, {"date": "2026-04-28", "cat": "fuel", "amount": 1977.13, "src": "history", "liters": 245.87, "vendor": "פאמפי", "note": "903 בלבד · 10 תדלוקים", "monthly": true}, {"date": "2026-04-28", "cat": "tolls", "amount": 23.64, "src": "history", "vendor": "מנהרות הכרמל", "trips": 2}, {"date": "2026-05-14", "cat": "repair", "amount": 1670.0, "src": "history", "vendor": "Kia Nazareth", "note": "front seat heater switch", "km": 157588}, {"date": "2026-05-19", "cat": "tolls", "amount": 754.73, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 25}, {"date": "2026-05-20", "cat": "tolls", "amount": 95.24, "src": "history", "vendor": "כביש 6 צפון", "trips": 24}, {"date": "2026-05-24", "cat": "tires", "amount": 60.0, "src": "history", "vendor": "Tzmigei HaAmakim", "note": "פנצ'ר date partly illegible (24.?.26)"}, {"date": "2026-05-28", "cat": "fuel", "amount": 1540.33, "src": "history", "liters": 191.11, "vendor": "פאמפי", "note": "903 בלבד · 8 תדלוקים", "monthly": true}, {"date": "2026-05-28", "cat": "tolls", "amount": 23.64, "src": "history", "vendor": "מנהרות הכרמל", "trips": 2}, {"date": "2026-06-11", "cat": "tires", "amount": 40.0, "src": "history", "vendor": "Merkaz HaTzamig Afula", "note": "פנצ'ר"}, {"date": "2026-06-19", "cat": "tolls", "amount": 521.37, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 17}, {"date": "2026-06-20", "cat": "tolls", "amount": 69.84, "src": "history", "vendor": "כביש 6 צפון", "trips": 18}, {"date": "2026-06-22", "cat": "tires", "amount": 60.0, "src": "history", "vendor": "Tzmigei HaAmakim", "note": "פנצ'ר amount handwritten (read as 60)"}, {"date": "2026-06-25", "cat": "parking", "amount": 10.94, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 2}, {"date": "2026-06-27", "cat": "charging", "amount": 15.66, "src": "history", "kwh": 10.799, "vendor": "Sonol EVI", "note": "Kibbutz Dalia"}, {"date": "2026-06-28", "cat": "fuel", "amount": 2309.64, "src": "history", "liters": 296.49, "vendor": "פאמפי", "note": "903 בלבד · 11 תדלוקים", "monthly": true}, {"date": "2026-06-28", "cat": "charging", "amount": 11.1, "src": "history", "kwh": 10.572, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2026-06-30", "cat": "parking", "amount": 26.9, "src": "history", "vendor": "פנגו", "note": "חניון Azrieli TA", "count": 1}, {"date": "2026-07-08", "cat": "parking", "amount": 31.0, "src": "history", "vendor": "פנגו", "note": "חניון Reading West", "count": 1}, {"date": "2026-07-19", "cat": "tolls", "amount": 332.1, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 12}, {"date": "2026-07-20", "cat": "tolls", "amount": 98.0, "src": "history", "vendor": "כביש 6 צפון", "trips": 26, "note": "כולל הערכה בניכוי 404"}, {"date": "2026-07-20", "cat": "parking", "amount": 42.9, "src": "history", "vendor": "פנגו", "note": "חניון Rothberg", "count": 1}, {"date": "2026-07-25", "cat": "charging", "amount": 15.64, "src": "history", "kwh": 10.76, "vendor": "Sonol EVI", "note": "Kibbutz Dalia"}, {"date": "2026-07-25", "cat": "parking", "amount": 172.49, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 4}, {"date": "2026-07-28", "cat": "fuel", "amount": 1867.93, "src": "history", "liters": 250.06, "vendor": "פאמפי", "note": "903 בלבד · 9 תדלוקים", "monthly": true}, {"date": "2026-08-01", "cat": "service", "amount": 1200.0, "src": "history", "vendor": "Kia Nazareth", "note": "165k service: oil + filters + air + cabin + brake fluid", "km": 169947}, {"date": "2026-08-19", "cat": "tolls", "amount": 543.65, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 21}, {"date": "2026-08-20", "cat": "tolls", "amount": 111.19, "src": "history", "vendor": "כביש 6 צפון", "trips": 27}, {"date": "2026-08-25", "cat": "parking", "amount": 168.65, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 2}, {"date": "2026-08-28", "cat": "fuel", "amount": 1932.34, "src": "history", "liters": 239.15, "vendor": "פאמפי", "note": "903 בלבד · 9 תדלוקים", "monthly": true}, {"date": "2026-09-19", "cat": "tolls", "amount": 474.93, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 19}, {"date": "2026-09-20", "cat": "tolls", "amount": 63.5, "src": "history", "vendor": "כביש 6 צפון", "trips": 15}, {"date": "2026-09-28", "cat": "fuel", "amount": 1537.42, "src": "history", "liters": 196.83, "vendor": "פאמפי", "note": "903 בלבד · 8 תדלוקים", "monthly": true}, {"date": "2026-10-02", "cat": "fuel", "amount": 215.19, "src": "history", "liters": 26.02, "vendor": "פאמפי · Dor Shimron"}, {"date": "2026-10-07", "cat": "fuel", "amount": 217.6, "src": "history", "liters": 28.005, "vendor": "פאמפי · Alon Migdal HaEmek"}, {"date": "2026-10-10", "cat": "parking", "amount": 31.9, "src": "history", "vendor": "פנגו", "note": "חניון Ramat HaNadiv", "count": 1}, {"date": "2026-10-11", "cat": "fuel", "amount": 233.1, "src": "history", "liters": 30.0, "vendor": "פאמפי · Alon Magal West"}, {"date": "2026-10-12", "cat": "fuel", "amount": 186.87, "src": "history", "liters": 24.05, "vendor": "פאמפי · Alon Na'an East"}, {"date": "2026-10-14", "cat": "fuel", "amount": 194.51, "src": "history", "liters": 25.034, "vendor": "פאמפי · Alon Mizra"}, {"date": "2026-10-19", "cat": "fuel", "amount": 233.12, "src": "history", "liters": 30.002, "vendor": "פאמפי · Alon Migdal HaEmek"}, {"date": "2026-10-19", "cat": "tolls", "amount": 754.62, "src": "history", "vendor": "כביש 6 (דרך ארץ)", "trips": 27}, {"date": "2026-10-20", "cat": "fuel", "amount": 159.73, "src": "history", "liters": 20.557, "vendor": "פאמפי · Alon Magal East"}, {"date": "2026-10-20", "cat": "tolls", "amount": 112.08, "src": "history", "vendor": "כביש 6 צפון", "note": "סכום כולל, לא מפוצל"}, {"date": "2026-10-22", "cat": "fuel", "amount": 194.25, "src": "history", "liters": 25.0, "vendor": "פאמפי · Alon Mizra"}, {"date": "2026-10-24", "cat": "service", "amount": 1080.0, "src": "history", "vendor": "Kia Nazareth", "note": "180k service: oil + filters + cabin + wipers", "km": 181944}, {"date": "2026-10-25", "cat": "fuel", "amount": 171.05, "src": "history", "liters": 22.014, "vendor": "פאמפי · Alon Mizra"}, {"date": "2026-10-25", "cat": "parking", "amount": 3.18, "src": "history", "vendor": "פנגו", "note": "חניה ברחוב ", "count": 1}, {"date": "2026-10-26", "cat": "fuel", "amount": 124.53, "src": "history", "liters": 16.027, "vendor": "פאמפי · Alon Na'an West"}, {"date": "2026-10-29", "cat": "fuel", "amount": 194.29, "src": "history", "liters": 25.005, "vendor": "פאמפי · Alon Mizra"}, {"date": "2026-11-01", "cat": "charging", "amount": 14.56, "src": "history", "kwh": 7.469, "vendor": "On EV", "note": "Holon (Hey Be'Iyar)"}, {"date": "2026-11-01", "cat": "charging", "amount": 11.03, "src": "history", "kwh": 10.509, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2026-11-02", "cat": "charging", "amount": 10.53, "src": "history", "kwh": 10.03, "vendor": "EV Edge", "note": "Ginegar"}, {"date": "2026-11-03", "cat": "charging", "amount": 10.96, "src": "history", "kwh": 10.44, "vendor": "EV Edge", "note": "Ginegar"}], "odometer": [{"date": "2023-03-21", "km": 0, "src": "delivery"}, {"date": "2023-07-12", "km": 15170, "src": "invoice"}, {"date": "2023-11-27", "km": 30913, "src": "invoice"}, {"date": "2024-04-09", "km": 46728, "src": "invoice"}, {"date": "2024-07-19", "km": 60585, "src": "invoice"}, {"date": "2024-11-20", "km": 76942, "src": "invoice"}, {"date": "2025-03-13", "km": 95567, "src": "invoice"}, {"date": "2025-04-05", "km": 99060, "src": "invoice"}, {"date": "2025-07-07", "km": 113361, "src": "invoice"}, {"date": "2025-10-18", "km": 127190, "src": "invoice"}, {"date": "2026-01-29", "km": 144818, "src": "invoice"}, {"date": "2026-04-16", "km": 153662, "src": "invoice"}, {"date": "2026-05-14", "km": 157588, "src": "invoice"}, {"date": "2026-08-01", "km": 169947, "src": "invoice"}, {"date": "2026-10-24", "km": 181944, "src": "invoice"}]};
+const FB_CONFIG = {"apiKey":"AIzaSyDfKga2DSpCfnm8T8HKZWBEqSZXLmZLCJs","authDomain":"niro903.firebaseapp.com","projectId":"niro903","storageBucket":"niro903.firebasestorage.app","messagingSenderId":"82448186668","appId":"1:82448186668:web:2578f5d94d2eec39114089"}
+;
+const CATS = {
+  fuel:{n:'דלק',i:'⛽'}, charging:{n:'טעינה',i:'⚡'}, service:{n:'טיפול',i:'🔧'}, tires:{n:'צמיגים ופנצ\'רים',i:'🛞'},
+  repair:{n:'תיקונים',i:'🛠️'}, tolls:{n:'כבישי אגרה',i:'🛣️'}, parking:{n:'חניה',i:'🅿️'}, insurance:{n:'ביטוח',i:'🛡️'},
+  license:{n:'אגרת רישוי',i:'📄'}, other:{n:'אחר',i:'•'}
+};
+const NOVAT = new Set(['insurance','license']);
+const SERVICE_INTERVAL = 15000;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim();
+const $ = id => document.getElementById(id);
+const fmt = (n,d=0) => (n==null||isNaN(n))?'–':n.toLocaleString('he-IL',{minimumFractionDigits:d,maximumFractionDigits:d});
+const ils = (n,d=0) => '₪'+fmt(n,d);
+const ym = d => d.slice(0,7);
+const today = () => new Date().toISOString().slice(0,10);
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const vatRate = d => d < '2025-01-01' ? 0.17 : 0.18;
+
+/* ---------- storage ---------- */
+let DB = {expenses:[], odometer:[]};
+const LS='niro903.v1';
+function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){DB=JSON.parse(s); return true;} }catch(e){} return false; }
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(DB)); }catch(e){} }
+const SEED_VER='2026-11-04b';
+function seed(){ DB={seedVer:SEED_VER,expenses:SEED.expenses.map(e=>({id:uid(),...e})), odometer:SEED.odometer.map(o=>({id:uid(),...o}))}; saveLocal(); }
+function reseedIfNeeded(){ if(DB.seedVer===SEED_VER) return;
+  const keepE=DB.expenses.filter(e=>e.src!=='history'), keepO=DB.odometer.filter(o=>!['invoice','delivery'].includes(o.src));
+  seed(); DB.expenses.push(...keepE); DB.odometer.push(...keepO); saveLocal(); }
+
+/* Firebase sync (optional) */
+let fb=null, user=null;
+async function initFirebase(){
+  if(!FB_CONFIG) return;
+  try{
+    const v='11.10.0', b='https://www.gstatic.com/firebasejs/'+v+'/';
+    const [{initializeApp},{getAuth,onAuthStateChanged,GoogleAuthProvider,signInWithPopup,signInWithRedirect},
+      {initializeFirestore,persistentLocalCache,collection,doc,setDoc,deleteDoc,onSnapshot,writeBatch}] =
+      await Promise.all([import(b+'firebase-app.js'),import(b+'firebase-auth.js'),import(b+'firebase-firestore.js')]);
+    const app=initializeApp(FB_CONFIG);
+    const auth=getAuth(app);
+    const db=initializeFirestore(app,{localCache:persistentLocalCache()});
+    fb={auth,db,collection,doc,setDoc,deleteDoc,onSnapshot,writeBatch,GoogleAuthProvider,signInWithPopup,signInWithRedirect,app};
+    onAuthStateChanged(auth,u=>{user=u; setSync(); if(u) attach();});
+    try{ const ai=await import(b+'firebase-ai.js'); fb.ai=ai; }catch(e){}
+  }catch(e){ console.warn('firebase off',e); }
+}
+function setSync(){
+  $('syncDot').className='dot'+(user?' on':'');
+  $('syncTx').textContent=user?'מסונכרן':(fb?'לא מחובר':'מקומי');
+  $('loginBtn').style.display=(fb&&!user)?'':'none';
+}
+async function login(){
+  if(!fb) return toast('Firebase לא מוגדר עדיין');
+  const p=new fb.GoogleAuthProvider();
+  try{ await fb.signInWithPopup(fb.auth,p);}catch(e){ await fb.signInWithRedirect(fb.auth,p); }
+}
+let first={expenses:true,odometer:true};
+function attach(){
+  for(const col of ['expenses','odometer']){
+    const ref=fb.collection(fb.db,'users',user.uid,col);
+    fb.onSnapshot(ref, async snap=>{
+      if(first[col] && snap.empty){ // first time: upload local data
+        first[col]=false; await pushAll(col); return;
+      }
+      first[col]=false;
+      DB[col]=snap.docs.map(d=>({id:d.id,...d.data()}));
+      saveLocal(); render();
+    });
+  }
+}
+async function pushAll(col){
+  const items=DB[col];
+  for(let i=0;i<items.length;i+=400){
+    const b=fb.writeBatch(fb.db);
+    items.slice(i,i+400).forEach(it=>{const {id,...rest}=it; b.set(fb.doc(fb.db,'users',user.uid,col,id),rest);});
+    await b.commit();
+  }
+}
+async function put(col,item){
+  const i=DB[col].findIndex(x=>x.id===item.id);
+  if(i>=0) DB[col][i]=item; else DB[col].push(item);
+  saveLocal();
+  if(fb&&user){ const {id,...rest}=item; fb.setDoc(fb.doc(fb.db,'users',user.uid,col,id),rest); }
+}
+async function del(col,id){
+  DB[col]=DB[col].filter(x=>x.id!==id); saveLocal();
+  if(fb&&user) fb.deleteDoc(fb.doc(fb.db,'users',user.uid,col,id));
+}
+
+/* ---------- derived data ---------- */
+function odoPoints(){
+  const pts=[...DB.odometer.map(o=>({d:o.date.slice(0,10),km:+o.km})), ...DB.expenses.filter(e=>e.km).map(e=>({d:e.date.slice(0,10),km:+e.km}))];
+  pts.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:a.km-b.km);
+  const out=[]; for(const p of pts){ if(!out.length||p.km>=out[out.length-1].km) out.push(p); }
+  return out;
+}
+const dnum = d => new Date(d+'T12:00:00').getTime()/864e5;
+function kmAt(d){ // interpolated odometer at date
+  const p=odoPoints(); if(!p.length) return null;
+  const t=dnum(d);
+  if(t<=dnum(p[0].d)) return p[0].km;
+  for(let i=1;i<p.length;i++){ const a=p[i-1],b=p[i]; if(t<=dnum(b.d)){ const f=(t-dnum(a.d))/Math.max(1,dnum(b.d)-dnum(a.d)); return a.km+f*(b.km-a.km);} }
+  const r=recentRate(); return p[p.length-1].km + r*(t-dnum(p[p.length-1].d));
+}
+function recentRate(){ // km/day over last ~120 days of readings
+  const p=odoPoints(); if(p.length<2) return 140;
+  const last=p[p.length-1]; let a=p[0];
+  for(const q of p){ if(dnum(last.d)-dnum(q.d)>=90) a=q; }
+  return (last.km-a.km)/Math.max(1,dnum(last.d)-dnum(a.d));
+}
+function months(){
+  const s=new Set(DB.expenses.map(e=>ym(e.date))); const p=odoPoints(); if(p.length) s.add(ym(p[0].d));
+  const arr=[...s].sort(); if(!arr.length) return [];
+  const out=[]; let [y,m]=arr[0].split('-').map(Number); const end=ym(today());
+  while(true){ const k=y+'-'+String(m).padStart(2,'0'); out.push(k); if(k>=end) break; m++; if(m>12){m=1;y++;} }
+  return out;
+}
+function monthEnd(k){ const [y,m]=k.split('-').map(Number); return new Date(Date.UTC(y,m,0)).toISOString().slice(0,10); }
+function monthStart(k){ return k+'-01'; }
+function kmInMonth(k){
+  const s=monthStart(k), e=monthEnd(k), now=today();
+  const end = e>now? now : e; if(s>now) return 0;
+  const a=kmAt(s), b=kmAt(end); if(a==null) return null; return Math.max(0,b-a);
+}
+function byMonthCat(){
+  const m={}; for(const e of DB.expenses){ const k=ym(e.date); (m[k]??={})[e.cat]=(m[k][e.cat]||0)+ +e.amount; } return m;
+}
+
+/* ---------- render ---------- */
+let LIST_FILTER='all', LIST_N=40;
+function render(){ renderHome(); if($('v-charts').classList.contains('on')) renderCharts(); if($('v-list').classList.contains('on')) renderList(); if($('v-report').classList.contains('on')) renderReport(); }
+function catColor(c){ return css(c)||'#888'; }
+function itemHtml(e){
+  const c=CATS[e.cat]||CATS.other; const col=catColor(e.cat);
+  const extra=[e.liters?fmt(e.liters,1)+' ל׳':'', e.kwh?fmt(e.kwh,1)+' קוט"ש':'', e.km?fmt(e.km)+' ק"מ':''].filter(Boolean).join(' · ');
+  const sub=[new Date(e.date.slice(0,10)).toLocaleDateString('he-IL',{day:'numeric',month:'short',year:'2-digit'}), e.monthly?'סיכום חודשי':'', extra, e.note||''].filter(Boolean).join(' · ');
+  return `<div class="it" onclick="editItem('${e.id}')"><div class="ic" style="background:${col}22;color:${col}">${c.i}</div><div class="t"><b>${e.vendor||c.n}</b><small>${sub}</small></div><div class="a">${e.amount?ils(e.amount,e.amount<100?2:0):'<span class=mut>–</span>'}</div></div>`;
+}
+function renderHome(){
+  const bm=byMonthCat(), cur=ym(today());
+  const cm=bm[cur]||{}; const tot=Object.values(cm).reduce((a,b)=>a+b,0);
+  $('hMonth').textContent=ils(tot);
+  const ms=months().filter(k=>k<cur).slice(-12);
+  const avg=ms.reduce((a,k)=>a+Object.entries(bm[k]||{}).filter(([c])=>!NOVAT.has(c)).reduce((x,[,v])=>x+v,0),0)/Math.max(1,ms.length);
+  const day=new Date().getDate(), dim=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
+  $('hMonthCmp').innerHTML=`<span class="mut small">ממוצע ${ils(avg)}</span><br><span class="small">${fmt(day/dim*100)}% מהחודש עבר</span>`;
+  $('hMonthLeg').innerHTML=Object.entries(cm).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<span><i style="background:${catColor(c)}"></i>${CATS[c]?.n||c} ${ils(v)}</span>`).join('')||'<span>עוד אין הוצאות החודש</span>';
+  // km
+  const p=odoPoints(); const last=p[p.length-1]; const est=Math.round(kmAt(today()));
+  $('hKm').textContent=fmt(est);
+  $('hKmSub').textContent=last?(last.d===today()?'עודכן היום':`משוער · נמדד ${fmt(last.km)} ב־${new Date(last.d).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'})}`):'';
+  $('hKmM').textContent=fmt(recentRate()*30.4);
+  // service
+  const svc=DB.expenses.filter(e=>e.cat==='service'&&e.km).sort((a,b)=>b.km-a.km)[0];
+  if(svc){
+    const next=svc.km+SERVICE_INTERVAL, left=next-est, pct=Math.min(100,Math.max(0,(est-svc.km)/SERVICE_INTERVAL*100));
+    const days=left/Math.max(1,recentRate());
+    $('hSvc').innerHTML = left>0?`עוד ${fmt(left)} ק"מ`:`<span class="warn">עברת ב־${fmt(-left)} ק"מ</span>`;
+    $('hSvcSub').innerHTML=`ב־${fmt(next)} ק"מ<br>${left>0?'בערך '+new Date(Date.now()+days*864e5).toLocaleDateString('he-IL',{day:'numeric',month:'short'}):''}`;
+    $('hSvcBar').style.width=pct+'%'; $('hSvcBar').style.background=left<1500?css('warn'):css('acc');
+  }
+  // consumption: last 90 days of fills with km, else last known 903-only months
+  const c=consumptionSeries().filter(x=>x.v); const lastC=c.slice(-3);
+  if(lastC.length){ const v=lastC.reduce((a,b)=>a+b.v,0)/lastC.length; $('hCons').textContent=fmt(v,1); $('hConsSub').textContent='ליטר ל־100 ק"מ · '+lastC.length+' חודשים אחרונים'; }
+  // cost per km 12m
+  let s=0,k=0; for(const m of ms){ s+=Object.values(bm[m]||{}).reduce((a,b)=>a+b,0); k+=kmInMonth(m)||0; }
+  $('hCpk').textContent=k?'₪'+fmt(s/k,2):'–';
+  // alerts
+  const al=[]; const ins=DB.expenses.filter(e=>e.cat==='insurance'||e.cat==='license');
+  for(const cat of ['insurance','license']){
+    const l=ins.filter(e=>e.cat===cat).sort((a,b)=>a.date<b.date?1:-1)[0];
+    if(l){ const m=(l.note||'').match(/עד (\d{4}-\d\d-\d\d)/); if(m){ const dd=(dnum(m[1])-dnum(today())); if(dd<45&&dd>-30) al.push(`${cat==='insurance'?'🛡️ הביטוח':'📄 הרישוי'} מסתיים ב־${new Date(m[1]).toLocaleDateString('he-IL')}`);} }
+  }
+  $('hAlerts').style.display=al.length?'':'none'; $('hAlerts').innerHTML=al.map(a=>`<div class="warn">${a}</div>`).join('');
+  const rec=[...DB.expenses].sort((a,b)=>a.date<b.date?1:-1).slice(0,6);
+  $('hRecent').innerHTML=rec.map(itemHtml).join('');
+}
+function consumptionSeries(){
+  // monthly liters for months where fuel is 903-only, divided by km
+  const out=[]; const ms=months();
+  for(const k of ms){
+    const f=DB.expenses.filter(e=>e.cat==='fuel'&&ym(e.date)===k);
+    if(!f.length||f.some(e=>e.shared)) { out.push({k,v:null}); continue; }
+    const L=f.reduce((a,e)=>a+(+e.liters||0),0), km=kmInMonth(k);
+    out.push({k,v: (L&&km>500)? L/km*100 : null});
+  }
+  return out;
+}
+let charts={}, RANGE=12;
+function mk(id,cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart($(id),cfg); }
+function baseOpts(extra={}){
+  return Object.assign({responsive:true,maintainAspectRatio:false,animation:false,
+    plugins:{legend:{display:false},tooltip:{rtl:true,textDirection:'rtl'}},
+    scales:{x:{ticks:{color:css('mut'),maxRotation:0,autoSkipPadding:10,font:{size:11}},grid:{display:false}},
+            y:{ticks:{color:css('mut'),font:{size:11}},grid:{color:css('line')},beginAtZero:true}}},extra);
+}
+const mlabel=k=>{const [y,m]=k.split('-');return m+'/'+y.slice(2);};
+function renderCharts(){
+  if(typeof Chart==='undefined') return;
+  const ms=months().slice(-RANGE); const bm=byMonthCat(); const L=ms.map(mlabel);
+  const cats=Object.keys(CATS).filter(c=>ms.some(k=>bm[k]?.[c]));
+  mk('cMonthly',{type:'bar',data:{labels:L,datasets:cats.map(c=>({label:CATS[c].n,data:ms.map(k=>Math.round(bm[k]?.[c]||0)),backgroundColor:catColor(c),borderRadius:2,stack:'s'}))},
+    options:baseOpts({scales:{x:{stacked:true,ticks:{color:css('mut'),maxRotation:0,autoSkipPadding:8,font:{size:10}},grid:{display:false}},y:{stacked:true,ticks:{color:css('mut'),font:{size:11}},grid:{color:css('line')}}}})});
+  $('lMonthly').innerHTML=cats.map(c=>`<span><i style="background:${catColor(c)}"></i>${CATS[c].n}</span>`).join('');
+  const tot={}; for(const k of ms) for(const [c,v] of Object.entries(bm[k]||{})) tot[c]=(tot[c]||0)+v;
+  const pc=Object.entries(tot).sort((a,b)=>b[1]-a[1]); const sum=pc.reduce((a,b)=>a+b[1],0);
+  mk('cPie',{type:'doughnut',data:{labels:pc.map(([c,v])=>`${CATS[c].n} ${fmt(v/sum*100)}%`),datasets:[{data:pc.map(x=>Math.round(x[1])),backgroundColor:pc.map(x=>catColor(x[0])),borderColor:css('card'),borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,cutout:'62%',plugins:{legend:{position:'bottom',rtl:true,labels:{color:css('tx'),boxWidth:10,font:{size:12}}},tooltip:{rtl:true,callbacks:{label:c=>' '+ils(c.raw)}}}}});
+  const kms=ms.map(kmInMonth);
+  mk('cKm',{type:'bar',data:{labels:L,datasets:[{data:kms.map(v=>Math.round(v||0)),backgroundColor:css('acc2'),borderRadius:3}]},options:baseOpts()});
+  mk('cCpk',{type:'line',data:{labels:L,datasets:[{data:ms.map((k,i)=>{const s=Object.values(bm[k]||{}).reduce((a,b)=>a+b,0);return kms[i]>500?+(s/kms[i]).toFixed(2):null;}),borderColor:css('warn'),backgroundColor:css('warn'),tension:.3,pointRadius:2,spanGaps:true}]},options:baseOpts()});
+  const cs=consumptionSeries().slice(-RANGE);
+  mk('cCons',{type:'line',data:{labels:cs.map(x=>mlabel(x.k)),datasets:[{data:cs.map(x=>x.v?+x.v.toFixed(1):null),borderColor:css('fuel'),backgroundColor:css('fuel'),tension:.3,pointRadius:2,spanGaps:false}]},options:baseOpts()});
+  const ev=ms.map((k,i)=>{const kwh=DB.expenses.filter(e=>e.cat==='charging'&&ym(e.date)===k).reduce((a,e)=>a+(+e.kwh||0),0);return kms[i]>500?+Math.min(100,kwh/16*100/kms[i]*100).toFixed(1):null;});
+  mk('cEv',{type:'bar',data:{labels:L,datasets:[{data:ev,backgroundColor:css('charging'),borderRadius:3}]},options:baseOpts({scales:{x:{ticks:{color:css('mut'),maxRotation:0,autoSkipPadding:10,font:{size:11}},grid:{display:false}},y:{ticks:{color:css('mut'),callback:v=>v+'%'},grid:{color:css('line')},beginAtZero:true}}})});
+  const ppl=ms.map(k=>{const f=DB.expenses.filter(e=>e.cat==='fuel'&&ym(e.date)===k&&e.liters);const L=f.reduce((a,e)=>a+ +e.liters,0),A=f.reduce((a,e)=>a+ +e.amount,0);return L?+(A/L).toFixed(2):null;});
+  mk('cPpl',{type:'line',data:{labels:L,datasets:[{data:ppl,borderColor:css('fuel'),tension:.3,pointRadius:2,spanGaps:true}]},options:baseOpts({scales:{x:{ticks:{color:css('mut'),maxRotation:0,autoSkipPadding:10,font:{size:11}},grid:{display:false}},y:{ticks:{color:css('mut'),callback:v=>'₪'+(+v).toFixed(1)},grid:{color:css('line')}}}})});
+}
+function renderList(){
+  const fs=[['all','הכל'],...Object.entries(CATS).map(([k,v])=>[k,v.i+' '+v.n])];
+  $('listFilters').innerHTML=fs.map(([k,n])=>`<button class="chip ${LIST_FILTER===k?'on':''}" onclick="LIST_FILTER='${k}';LIST_N=40;renderList()">${n}</button>`).join('');
+  const arr=DB.expenses.filter(e=>LIST_FILTER==='all'||e.cat===LIST_FILTER).sort((a,b)=>a.date<b.date?1:-1);
+  $('listAll').innerHTML=arr.slice(0,LIST_N).map(itemHtml).join('')||'<div class="mut">אין רשומות</div>';
+  $('moreBtn').style.display=arr.length>LIST_N?'':'none';
+}
+$('moreBtn').onclick=()=>{LIST_N+=60;renderList();};
+function reportRows(y){
+  const rows={};
+  for(const e of DB.expenses){ if(!e.date.startsWith(y)) continue;
+    const r=rows[e.cat]??={cat:e.cat,n:0,gross:0,vat:0};
+    r.n++; r.gross+= +e.amount; if(!NOVAT.has(e.cat)) r.vat+= +e.amount - +e.amount/(1+vatRate(e.date)); }
+  return Object.values(rows).sort((a,b)=>b.gross-a.gross);
+}
+function renderReport(){
+  const ys=[...new Set(DB.expenses.map(e=>e.date.slice(0,4)))].sort().reverse();
+  const sel=$('repYear'); const cur=sel.value||ys[0];
+  sel.innerHTML=ys.map(y=>`<option ${y===cur?'selected':''}>${y}</option>`).join('');
+  const rows=reportRows(cur); const T=rows.reduce((a,r)=>({gross:a.gross+r.gross,vat:a.vat+r.vat}),{gross:0,vat:0});
+  $('repTable').innerHTML=`<table><tr><th>קטגוריה</th><th class="n">לפני מע"מ</th><th class="n">מע"מ</th><th class="n">סה"כ</th></tr>`+
+   rows.map(r=>`<tr><td>${CATS[r.cat].i} ${CATS[r.cat].n}</td><td class="n">${fmt(r.gross-r.vat)}</td><td class="n">${fmt(r.vat)}</td><td class="n">${fmt(r.gross)}</td></tr>`).join('')+
+   `<tr class="tot"><td>סה"כ</td><td class="n">${fmt(T.gross-T.vat)}</td><td class="n">${fmt(T.vat)}</td><td class="n">${fmt(T.gross)}</td></tr></table>`+
+   (DB.expenses.some(e=>e.shared&&e.date.startsWith(cur))?`<div class="small warn" style="margin-top:8px">חלק מחודשי הדלק כוללים גם את 404 (חשבון פאמפי משותף)</div>`:'');
+  $('dataInfo').textContent=`${DB.expenses.length} הוצאות · ${odoPoints().length} מדידות ק"מ · מאז ${DB.expenses.map(e=>e.date).sort()[0]?.slice(0,7)||''}`;
+}
+$('repYear').onchange=renderReport;
+function csvFor(y){
+  const head='תאריך,קטגוריה,ספק,הערה,ליטרים,קוט"ש,ק"מ,לפני מע"מ,מע"מ,סה"כ';
+  const lines=DB.expenses.filter(e=>e.date.startsWith(y)).sort((a,b)=>a.date<b.date?-1:1).map(e=>{
+    const g=+e.amount, v=NOVAT.has(e.cat)?0:g-g/(1+vatRate(e.date));
+    return [e.date.slice(0,10),CATS[e.cat].n,e.vendor||'',(e.note||'').replace(/,/g,' '),e.liters||'',e.kwh||'',e.km||'',(g-v).toFixed(2),v.toFixed(2),g.toFixed(2)].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',');
+  });
+  return '﻿'+head+'\n'+lines.join('\n');
+}
+async function exportCsv(dl){
+  const y=$('repYear').value, s=csvFor(y);
+  if(dl){ try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s],{type:'text/csv'})); a.download=`niro903_${y}.csv`; a.click(); toast('הקובץ ירד'); return; }catch(e){} }
+  try{ await navigator.clipboard.writeText(s); toast('הועתק'); }catch(e){ toast('לא הצלחתי להעתיק'); }
+}
+function backup(){ const s=JSON.stringify(DB); try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s],{type:'application/json'})); a.download='niro903_backup.json'; a.click(); }catch(e){} }
+
+/* ---------- nav ---------- */
+function go(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  document.querySelectorAll('nav button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  window.scrollTo(0,0);
+  if(v==='charts') setTimeout(renderCharts,10); if(v==='list') renderList(); if(v==='report') renderReport();
+  try{ history.replaceState(null,'','#'+v);}catch(e){}
+}
+document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b));RANGE=+b.dataset.r;renderCharts();});
+
+/* ---------- add / edit ---------- */
+const TYPES=[['fill','⛽ תדלוק'],['charge','⚡ טעינה'],['service','🔧 טיפול'],['tires','🛞 צמיג/פנצ\'ר'],['repair','🛠️ תיקון'],['parking','🅿️ חניה'],['tolls','🛣️ אגרה'],['insurance','🛡️ ביטוח'],['license','📄 רישוי'],['other','• אחר'],['odo','📍 רק ק"מ']];
+let ADD={type:'fill',mode:'manual',editId:null,photos:{}};
+function nowLocal(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); }
+function openAdd(type,edit){
+  ADD={type,mode:'manual',editId:edit?.id||null,photos:{}};
+  $('addForm').reset(); $('fDate').value=edit?(edit.date.length>10?edit.date:edit.date+'T12:00'):nowLocal();
+  if(edit){ $('fKm').value=edit.km||''; $('fLit').value=edit.liters||''; $('fKwh').value=edit.kwh||''; $('fAmt').value=edit.amount||''; $('fVend').value=edit.vendor||''; $('fNote').value=edit.note||''; }
+  ['phOdo','phPump'].forEach(id=>{const l=$(id); l.classList.remove('has'); l.style.backgroundImage=''; });
+  $('ocrTx').textContent='';
+  $('delBtn').style.display=edit?'':'none';
+  $('addTitle').textContent=edit?'עריכה':'הוספה';
+  setType(type); setMode('manual');
+  $('addModal').classList.add('on');
+}
+function closeAdd(){ $('addModal').classList.remove('on'); }
+function setType(t){
+  ADD.type=t;
+  $('typeChips').innerHTML=TYPES.map(([k,n])=>`<button type="button" class="chip ${k===t?'on':''}" onclick="setType('${k}')">${n}</button>`).join('');
+  const fill=t==='fill', ch=t==='charge', odo=t==='odo';
+  $('fillBox').style.display=fill?'':'none';
+  $('litBox').style.display=fill?'':'none';
+  $('kwhBox').style.display=ch?'':'none';
+  $('kmBox').style.display=(ch)?'none':'';
+  $('fAmt').parentElement; $('amtLbl').style.display=$('fAmt').style.display=odo?'none':'';
+  $('vendBox').style.display=odo?'none':''; $('fileBox').style.display=(fill||odo)?'none':'';
+  $('fHint').textContent= fill?'הסכום לא חובה — הוא יגיע מדו"ח פאמפי בסוף החודש.': t==='service'?'הק"מ מהחשבונית משמש לחישוב הטיפול הבא.':'';
+  const vend={fill:['פאמפי'],charge:['EV Edge','On EV','Sonol EVI'],service:['Kia Nazareth'],tires:['צמיגי העמקים'],parking:['פנגו'],tolls:['כביש 6 (דרך ארץ)','כביש 6 צפון','מנהרות הכרמל'],insurance:['הראל'],license:['משרד התחבורה']}[t]||[];
+  $('vendList').innerHTML=vend.map(v=>`<option value="${v}">`).join('');
+  if(!ADD.editId&&vend[0]&&!$('fVend').value) $('fVend').value=vend[0];
+}
+function setMode(m){ ADD.mode=m; document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m)); $('photoBox').style.display=m==='photo'?'':'none'; }
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+document.querySelectorAll('.photo input').forEach(inp=>inp.onchange=async()=>{
+  const f=inp.files[0]; if(!f) return; const k=inp.dataset.k;
+  const url=await shrink(f); ADD.photos[k]=url;
+  const l=inp.parentElement; l.classList.add('has'); l.style.backgroundImage=`url(${url})`;
+  readPhoto(k,url);
+});
+function shrink(file){ return new Promise(res=>{ const img=new Image(); img.onload=()=>{ const s=Math.min(1,1280/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=img.width*s; c.height=img.height*s; c.getContext('2d').drawImage(img,0,0,c.width,c.height); res(c.toDataURL('image/jpeg',.82)); }; img.src=URL.createObjectURL(file); }); }
+async function readPhoto(k,dataUrl){
+  const t=$('ocrTx');
+  if(!fb?.ai){ t.textContent='זיהוי אוטומטי יופעל אחרי חיבור Firebase AI — בינתיים הקלד את המספר מהתמונה.'; return; }
+  t.textContent='קורא את התמונה…';
+  try{
+    const {getAI,getGenerativeModel,GoogleAIBackend}=fb.ai;
+    const model=getGenerativeModel(getAI(fb.app,{backend:new GoogleAIBackend()}),{model:'gemini-2.5-flash'});
+    const q= k==='odo' ? 'This is a car dashboard. Return ONLY the total odometer reading in km as digits (not trip meter, not range). If unreadable return NONE.'
+                        : 'This is a fuel pump display. Return ONLY JSON {"liters":number,"amount":number} with the dispensed liters and total price. If unreadable return NONE.';
+    const r=await model.generateContent([q,{inlineData:{mimeType:'image/jpeg',data:dataUrl.split(',')[1]}}]);
+    const s=r.response.text().trim();
+    if(/NONE/.test(s)) { t.textContent='לא הצלחתי לקרוא — הקלד ידנית.'; return; }
+    if(k==='odo'){ const n=s.replace(/\D/g,''); if(n){ $('fKm').value=n; t.textContent=`זוהה ${fmt(+n)} ק"מ — בדוק ואשר`; } }
+    else { const j=JSON.parse(s.replace(/```json|```/g,'')); if(j.liters) $('fLit').value=j.liters; if(j.amount) $('fAmt').value=j.amount; t.textContent=`זוהו ${j.liters} ליטר${j.amount?' · ₪'+j.amount:''} — בדוק ואשר`; }
+  }catch(e){ t.textContent='לא הצלחתי לקרוא — הקלד ידנית.'; }
+}
+async function saveAdd(ev){
+  ev.preventDefault();
+  const t=ADD.type, date=$('fDate').value, km=+$('fKm').value||null;
+  const lastKm=odoPoints().filter(p=>p.d<=date.slice(0,10)).pop();
+  if(km && lastKm && km<lastKm.km && !ADD.editId){ if(!confirmInline(`הק"מ נמוך מהמדידה הקודמת (${fmt(lastKm.km)}). לשמור בכל זאת?`)) return; }
+  if(t==='odo'){ if(!km) return toast('הזן ק"מ'); await put('odometer',{id:ADD.editId||uid(),date,km,src:'manual'}); }
+  else{
+    const cat={fill:'fuel',charge:'charging'}[t]||t;
+    const item={id:ADD.editId||uid(),date,cat,amount:+$('fAmt').value||0,vendor:$('fVend').value.trim(),note:$('fNote').value.trim(),src:'manual'};
+    if(t==='fill'){ item.liters=+$('fLit').value||null; item.km=km; item.pending=!item.amount; }
+    else if(t==='charge'){ item.kwh=+$('fKwh').value||null; }
+    else if(km) item.km=km;
+    const f=$('fFile').files?.[0]; if(f) item.file=f.name;
+    Object.keys(item).forEach(k=>item[k]==null&&delete item[k]);
+    if(t!=='fill'&&!item.amount) return toast('הזן סכום');
+    await put('expenses',item);
+  }
+  closeAdd(); toast('נשמר ✓'); render();
+}
+let _confirmOnce=null;
+function confirmInline(msg){ if(_confirmOnce===msg){_confirmOnce=null;return true;} _confirmOnce=msg; toast(msg+' (לחץ שמירה שוב)'); return false; }
+let EDIT=null;
+function editItem(id){ const e=DB.expenses.find(x=>x.id===id); if(!e) return; EDIT=e;
+  openAdd({fuel:'fill',charging:'charge'}[e.cat]||e.cat, e); }
+async function delItem(){ if(!ADD.editId) return; if(!confirmInline('למחוק את הרשומה?')) return; await del(ADD.type==='odo'?'odometer':'expenses',ADD.editId); closeAdd(); toast('נמחק'); render(); }
+let _tt; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('on'),2600); }
+
+/* ---------- boot ---------- */
+if(!loadLocal()) seed(); else reseedIfNeeded();
+setSync(); render();
+const h=(location.hash||'').slice(1); if(['charts','list','report'].includes(h)) go(h);
+initFirebase();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
