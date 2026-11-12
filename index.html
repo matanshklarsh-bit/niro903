@@ -128,7 +128,7 @@ tr.tot td{font-weight:800;border-bottom:0}
   <div class="grid">
     <div class="stat" onclick="openAdd('odo')" style="cursor:pointer"><div class="l">קילומטראז'</div><div class="v" id="hKm">–</div><div class="s" id="hKmSub"></div></div>
     <div class="stat"><div class="l">ק"מ לחודש</div><div class="v" id="hKmM">–</div><div class="s">ממוצע 3 חודשים</div></div>
-    <div class="stat only903"><div class="l">צריכה</div><div class="v" id="hCons">–</div><div class="s" id="hConsSub">ליטר ל־100 ק"מ</div></div>
+    <div class="stat only903" onclick="toggleUnit()" style="cursor:pointer"><div class="l">צריכה <span class="pill">⇄</span></div><div class="v" id="hCons">–</div><div class="s" id="hConsSub">ליטר ל־100 ק"מ</div></div>
     <div class="stat only903"><div class="l">עלות לק"מ</div><div class="v" id="hCpk">–</div><div class="s">12 חודשים, הכל כלול</div></div>
   </div>
   <div class="card" id="hAlerts" style="display:none"></div>
@@ -149,7 +149,7 @@ tr.tot td{font-weight:800;border-bottom:0}
   <div class="card"><h2>לאן הולך הכסף</h2><div style="position:relative;height:330px"><canvas id="cPie"></canvas></div></div>
   <div class="card"><h2>ק"מ לחודש</h2><div style="position:relative;height:180px"><canvas id="cKm"></canvas></div></div>
   <div class="card only903"><h2>עלות לק"מ</h2><div class="mut small">כל ההוצאות חלקי הק"מ באותו חודש</div><div style="position:relative;height:180px"><canvas id="cCpk"></canvas></div></div>
-  <div class="card only903"><h2>צריכת דלק</h2><div class="mut small">ליטר ל־100 ק"מ · חודשים שבהם הדלק של 903 ידוע</div><div style="position:relative;height:180px"><canvas id="cCons"></canvas></div></div>
+  <div class="card only903"><div class="row"><h2>צריכת דלק</h2><div class="seg" id="unitSeg" style="padding:3px"><button data-u="l100" style="padding:5px 9px;font-size:13px;white-space:nowrap">ל׳/100</button><button data-u="kmpl" style="padding:5px 9px;font-size:13px;white-space:nowrap">ק"מ/ל׳</button></div></div><div class="mut small">חודשים שבהם הדלק של 903 ידוע</div><div style="position:relative;height:180px"><canvas id="cCons"></canvas></div></div>
   <div class="card only903"><h2>חשמל מול דלק</h2><div class="mut small">אחוז הק"מ המשוער על חשמל (לפי 16 קוט"ש ל־100 ק"מ)</div><div style="position:relative;height:180px"><canvas id="cEv"></canvas></div></div>
   <div class="card"><h2>מחיר ליטר</h2><div style="position:relative;height:170px"><canvas id="cPpl"></canvas></div></div>
 </section>
@@ -361,6 +361,14 @@ async function applyPatches(){
   }
 }
 
+/* ---------- consumption unit ---------- */
+let UNIT='l100'; try{ UNIT=localStorage.getItem('niro903.unit')||'l100'; }catch(e){}
+const cv = l100 => UNIT==='kmpl' ? 100/l100 : l100;          // series are stored as L/100km
+const unitLabel = () => UNIT==='kmpl' ? 'ק"מ לליטר' : 'ליטר ל־100 ק"מ';
+function setUnit(u){ UNIT=u; try{localStorage.setItem('niro903.unit',u);}catch(e){}
+  document.querySelectorAll('#unitSeg button').forEach(b=>b.classList.toggle('on',b.dataset.u===UNIT));
+  renderHome(); if($('v-charts').classList.contains('on')) renderCharts(); }
+function toggleUnit(){ setUnit(UNIT==='l100'?'kmpl':'l100'); }
 /* ---------- derived data ---------- */
 function odoPoints(){
   const pts=[...DB.odometer.filter(o=>carOf(o)===CAR).map(o=>({d:o.date.slice(0,10),km:+o.km})), ...EX().filter(e=>e.km).map(e=>({d:e.date.slice(0,10),km:+e.km}))];
@@ -439,7 +447,7 @@ function renderHome(){
   }
   // consumption: last 90 days of fills with km, else last known 903-only months
   const c=consumptionSeries().filter(x=>x.v); const lastC=c.slice(-3);
-  if(lastC.length){ const v=lastC.reduce((a,b)=>a+b.v,0)/lastC.length; $('hCons').textContent=fmt(v,1); $('hConsSub').textContent='ליטר ל־100 ק"מ · '+lastC.length+' חודשים אחרונים'; }
+  if(lastC.length){ const v=lastC.reduce((a,b)=>a+b.v,0)/lastC.length; $('hCons').textContent=fmt(cv(v),1); $('hConsSub').textContent=unitLabel()+' · '+lastC.length+' חודשים אחרונים'; }
   // cost per km 12m
   let s=0,k=0; for(const m of ms){ s+=Object.values(bm[m]||{}).reduce((a,b)=>a+b,0); k+=kmInMonth(m)||0; }
   $('hCpk').textContent=k?'₪'+fmt(s/k,2):'–';
@@ -500,7 +508,7 @@ function renderCharts(){
   mk('cKm',{type:'bar',data:{labels:L,datasets:[{data:kms.map(v=>Math.round(v||0)),backgroundColor:css('acc2'),borderRadius:3}]},options:baseOpts()});
   mk('cCpk',{type:'line',data:{labels:L,datasets:[{data:ms.map((k,i)=>{const s=Object.values(bm[k]||{}).reduce((a,b)=>a+b,0);return kms[i]>500?+(s/kms[i]).toFixed(2):null;}),borderColor:css('warn'),backgroundColor:css('warn'),tension:.3,pointRadius:2,spanGaps:true}]},options:baseOpts()});
   const cs=consumptionSeries().slice(-RANGE);
-  mk('cCons',{type:'line',data:{labels:cs.map(x=>mlabel(x.k)),datasets:[{data:cs.map(x=>x.v?+x.v.toFixed(1):null),borderColor:css('fuel'),backgroundColor:css('fuel'),tension:.3,pointRadius:2,spanGaps:false}]},options:baseOpts()});
+  mk('cCons',{type:'line',data:{labels:cs.map(x=>mlabel(x.k)),datasets:[{data:cs.map(x=>x.v?+cv(x.v).toFixed(1):null),borderColor:css('fuel'),backgroundColor:css('fuel'),tension:.3,pointRadius:2,spanGaps:false}]},options:baseOpts()});
   const ev=ms.map((k,i)=>{const kwh=EX().filter(e=>e.cat==='charging'&&ym(e.date)===k).reduce((a,e)=>a+(+e.kwh||0),0);return kms[i]>500?+Math.min(100,kwh/16*100/kms[i]*100).toFixed(1):null;});
   mk('cEv',{type:'bar',data:{labels:L,datasets:[{data:ev,backgroundColor:css('charging'),borderRadius:3}]},options:baseOpts({scales:{x:{ticks:{color:css('mut'),maxRotation:0,autoSkipPadding:10,font:{size:11}},grid:{display:false}},y:{ticks:{color:css('mut'),callback:v=>v+'%'},grid:{color:css('line')},beginAtZero:true}}})});
   const ppl=ms.map(k=>{const f=EX().filter(e=>e.cat==='fuel'&&ym(e.date)===k&&e.liters);const L=f.reduce((a,e)=>a+ +e.liters,0),A=f.reduce((a,e)=>a+ +e.amount,0);return L?+(A/L).toFixed(2):null;});
@@ -684,6 +692,7 @@ function go(v){
   try{ history.replaceState(null,'','#'+v);}catch(e){}
 }
 document.querySelectorAll('#spreadSeg button,#spreadSeg2 button').forEach(b=>{b.classList.toggle('on',(b.dataset.s==='1')===SPREAD); b.onclick=()=>setSpread(b.dataset.s==='1');});
+document.querySelectorAll('#unitSeg button').forEach(b=>{b.classList.toggle('on',b.dataset.u===UNIT); b.onclick=()=>setUnit(b.dataset.u);});
 document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#spreadSeg button,#spreadSeg2 button').forEach(b=>{b.classList.toggle('on',(b.dataset.s==='1')===SPREAD); b.onclick=()=>setSpread(b.dataset.s==='1');});
 document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b));RANGE=+b.dataset.r;renderCharts();});
 
