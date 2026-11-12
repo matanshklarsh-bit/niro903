@@ -736,7 +736,7 @@ async function readPhoto(k,dataUrl){
   t.textContent='קורא את התמונה…';
   try{
     const {getAI,getGenerativeModel,GoogleAIBackend}=fb.ai;
-    const model=getGenerativeModel(getAI(fb.app,{backend:new GoogleAIBackend()}),{model:'gemini-2.5-flash'});
+    const model=getGenerativeModel(getAI(fb.app,{backend:new GoogleAIBackend()}),{model:'gemini-3.8-flash'});
     const q= k==='odo' ? 'This is a car dashboard. Return ONLY the total odometer reading in km as digits (not trip meter, not range). If unreadable return NONE.'
                         : 'This is a fuel pump display. Return ONLY JSON {"liters":number,"amount":number} with the dispensed liters and total price. If unreadable return NONE.';
     const r=await model.generateContent([q,{inlineData:{mimeType:'image/jpeg',data:dataUrl.split(',')[1]}}]);
