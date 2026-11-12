@@ -16,7 +16,7 @@
   --bg:#0f1720;--card:#18222e;--card2:#1f2b39;--line:#2a3746;--tx:#e8eef5;--mut:#8a9aab;
   --acc:#3ddc97;--acc2:#4aa8ff;--warn:#ffb648;--bad:#ff6b6b;
   --fuel:#ff8a4c;--charging:#3ddc97;--service:#4aa8ff;--tires:#b48cff;--repair:#ff6b9a;
-  --tolls:#ffd24a;--parking:#5fd3e0;--insurance:#8fa6ff;--license:#c7d36b;--other:#8a9aab;
+  --tolls:#ffd24a;--parking:#5fd3e0;--insurance:#8fa6ff;--license:#c7d36b;--lease:#f2a65a;--other:#8a9aab;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--tx);font-family:Heebo,system-ui,sans-serif;font-size:16px}
@@ -92,12 +92,15 @@ tr.tot td{font-weight:800;border-bottom:0}
 .filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .filters::-webkit-scrollbar{display:none}
 .filters .chip{white-space:nowrap}
+.only404{display:none}body.c404 .only404{display:revert}body.c404 .only903{display:none!important}
+.carsw{display:flex;background:var(--card2);border-radius:10px;padding:3px;gap:2px}.carsw button{border:0;background:none;color:var(--mut);font:inherit;font-weight:700;font-size:13px;padding:5px 11px;border-radius:8px;cursor:pointer}.carsw button.on{background:var(--acc);color:#05261a}
 .ocr{font-size:13px;color:var(--acc2);margin-top:8px;min-height:18px}
 </style>
 </head>
 <body>
 <header>
-  <h1>נירו <span>903</span></h1>
+  <div style="display:flex;align-items:center;gap:10px"><h1 id="carTitle">נירו <span>903</span></h1>
+  <div class="carsw" id="carSw"><button data-c="903">903</button><button data-c="404">404</button></div></div>
   <div class="sync" id="sync"><i class="dot" id="syncDot"></i><span id="syncTx">מקומי</span></div>
 </header>
 <main>
@@ -110,18 +113,23 @@ tr.tot td{font-weight:800;border-bottom:0}
   </div>
   <div class="hero">
     <button class="btn pri" onclick="openAdd('fill')">⛽ תדלקתי</button>
-    <button class="btn" onclick="openAdd('charge')">⚡ טענתי</button>
+    <button class="btn only903" onclick="openAdd('charge')">⚡ טענתי</button>
+    <button class="btn only404" onclick="openAdd('odo')">📍 עדכון ק"מ</button>
   </div>
-  <div class="card">
+  <div class="card only903">
     <div class="row"><div><div class="mut small">טיפול הבא</div><div style="font-size:22px;font-weight:800" id="hSvc">–</div></div>
     <div style="text-align:left" class="small mut" id="hSvcSub"></div></div>
     <div class="bar"><i id="hSvcBar" style="width:0"></i></div>
   </div>
+  <div class="card" id="hFc" onclick="go('forecast')" style="cursor:pointer">
+    <div class="row"><h2>צפוי ב־60 הימים הקרובים</h2><span class="mut small">צפי ›</span></div>
+    <div class="list" id="hFcList"></div>
+  </div>
   <div class="grid">
-    <div class="stat"><div class="l">קילומטראז'</div><div class="v" id="hKm">–</div><div class="s" id="hKmSub"></div></div>
+    <div class="stat" onclick="openAdd('odo')" style="cursor:pointer"><div class="l">קילומטראז'</div><div class="v" id="hKm">–</div><div class="s" id="hKmSub"></div></div>
     <div class="stat"><div class="l">ק"מ לחודש</div><div class="v" id="hKmM">–</div><div class="s">ממוצע 3 חודשים</div></div>
-    <div class="stat"><div class="l">צריכה</div><div class="v" id="hCons">–</div><div class="s" id="hConsSub">ליטר ל־100 ק"מ</div></div>
-    <div class="stat"><div class="l">עלות לק"מ</div><div class="v" id="hCpk">–</div><div class="s">12 חודשים, הכל כלול</div></div>
+    <div class="stat only903"><div class="l">צריכה</div><div class="v" id="hCons">–</div><div class="s" id="hConsSub">ליטר ל־100 ק"מ</div></div>
+    <div class="stat only903"><div class="l">עלות לק"מ</div><div class="v" id="hCpk">–</div><div class="s">12 חודשים, הכל כלול</div></div>
   </div>
   <div class="card" id="hAlerts" style="display:none"></div>
   <div class="card">
@@ -135,12 +143,14 @@ tr.tot td{font-weight:800;border-bottom:0}
   <div class="seg" id="rangeSeg" style="margin-top:8px">
     <button data-r="12" class="on">12 חודשים</button><button data-r="24">24</button><button data-r="999">הכל</button>
   </div>
+  <div class="seg" id="spreadSeg" style="margin-top:8px"><button data-s="1">ביטוח ורישוי פרוסים על 12 חודשים</button><button data-s="0">לפי מועד התשלום</button></div>
+  <div class="card"><h2>דלק</h2><div class="mut small">₪ לחודש (עמודות) וליטרים (קו)</div><div style="position:relative;height:220px"><canvas id="cFuel"></canvas></div><div class="small mut" id="fuelSum" style="margin-top:8px"></div></div>
   <div class="card"><h2>הוצאות לפי חודש</h2><div style="position:relative;height:230px"><canvas id="cMonthly"></canvas></div><div class="legend" id="lMonthly"></div></div>
   <div class="card"><h2>לאן הולך הכסף</h2><div style="position:relative;height:330px"><canvas id="cPie"></canvas></div></div>
   <div class="card"><h2>ק"מ לחודש</h2><div style="position:relative;height:180px"><canvas id="cKm"></canvas></div></div>
-  <div class="card"><h2>עלות לק"מ</h2><div class="mut small">כל ההוצאות חלקי הק"מ באותו חודש</div><div style="position:relative;height:180px"><canvas id="cCpk"></canvas></div></div>
-  <div class="card"><h2>צריכת דלק</h2><div class="mut small">ליטר ל־100 ק"מ · חודשים שבהם הדלק של 903 ידוע</div><div style="position:relative;height:180px"><canvas id="cCons"></canvas></div></div>
-  <div class="card"><h2>חשמל מול דלק</h2><div class="mut small">אחוז הק"מ המשוער על חשמל (לפי 16 קוט"ש ל־100 ק"מ)</div><div style="position:relative;height:180px"><canvas id="cEv"></canvas></div></div>
+  <div class="card only903"><h2>עלות לק"מ</h2><div class="mut small">כל ההוצאות חלקי הק"מ באותו חודש</div><div style="position:relative;height:180px"><canvas id="cCpk"></canvas></div></div>
+  <div class="card only903"><h2>צריכת דלק</h2><div class="mut small">ליטר ל־100 ק"מ · חודשים שבהם הדלק של 903 ידוע</div><div style="position:relative;height:180px"><canvas id="cCons"></canvas></div></div>
+  <div class="card only903"><h2>חשמל מול דלק</h2><div class="mut small">אחוז הק"מ המשוער על חשמל (לפי 16 קוט"ש ל־100 ק"מ)</div><div style="position:relative;height:180px"><canvas id="cEv"></canvas></div></div>
   <div class="card"><h2>מחיר ליטר</h2><div style="position:relative;height:170px"><canvas id="cPpl"></canvas></div></div>
 </section>
 
@@ -150,11 +160,29 @@ tr.tot td{font-weight:800;border-bottom:0}
   <div class="card"><div class="list" id="listAll"></div><button class="btn blk sm" id="moreBtn" style="margin-top:10px">עוד</button></div>
 </section>
 
+
+<!-- FORECAST -->
+<section class="view" id="v-forecast">
+  <div class="seg" id="fcCarSeg" style="margin-top:8px"><button data-c="903">903</button><button data-c="404">404</button><button data-c="both">שני הרכבים</button></div>
+  <div class="card">
+    <div class="mut small">צפי ל־12 החודשים הקרובים</div>
+    <div class="big" id="fcTotal">–</div>
+    <div class="small mut" id="fcSub"></div>
+    <div class="legend" id="fcLeg"></div>
+  </div>
+  <div class="seg" id="spreadSeg2"><button data-s="1">ביטוח ורישוי פרוסים</button><button data-s="0">לפי מועד התשלום</button></div>
+  <div class="card"><h2>בפועל מול צפי</h2><div class="mut small">12 חודשים אחורה · 12 חודשים קדימה</div><div style="position:relative;height:220px"><canvas id="cFc"></canvas></div></div>
+  <div class="card"><h2>תשלומים גדולים צפויים</h2><div class="list" id="fcBig"></div></div>
+  <div class="card"><h2>לפי חודש</h2><div id="fcMonths"></div>
+    <div class="mut small" style="margin-top:10px">הוצאות שוטפות לפי ממוצע 6 החודשים האחרונים · טיפול כל 15,000 ק"מ · ביטוח ורישוי לפי השנה האחרונה · ק"מ לפי הקצב שלך</div></div>
+</section>
+
 <!-- REPORT -->
 <section class="view" id="v-report">
   <div class="card">
     <div class="row"><h2>סיכום שנתי</h2><select id="repYear" style="width:auto;padding:8px 10px;font-size:15px"></select></div>
-    <div class="mut small" style="margin-top:4px">לרואה החשבון · ביטוח ואגרת רישוי פטורים ממע"מ</div>
+    <div class="seg" id="repCarSeg" style="margin-top:10px"><button data-c="903">903</button><button data-c="404">404</button><button data-c="both">שני הרכבים</button></div>
+    <div class="mut small" style="margin-top:6px">לרואה החשבון · ביטוח ואגרת רישוי פטורים ממע"מ · בליסינג המע"מ לפי החשבונית</div>
     <div id="repTable" style="margin-top:10px"></div>
     <div class="row" style="margin-top:12px;gap:8px">
       <button class="btn sm" style="flex:1" onclick="exportCsv(true)">⬇️ הורד CSV</button>
@@ -177,6 +205,7 @@ tr.tot td{font-weight:800;border-bottom:0}
   <button data-v="charts" onclick="go('charts')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>גרפים</button>
   <button class="add" onclick="openAdd('fill')"><span class="c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg></span></button>
   <button data-v="list" onclick="go('list')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>היסטוריה</button>
+  <button data-v="forecast" onclick="go('forecast')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>צפי</button>
   <button data-v="report" onclick="go('report')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>דוח</button>
 </nav>
 
@@ -219,10 +248,16 @@ const FB_CONFIG = {"apiKey":"AIzaSyDfKga2DSpCfnm8T8HKZWBEqSZXLmZLCJs","authDomai
 const CATS = {
   fuel:{n:'דלק',i:'⛽'}, charging:{n:'טעינה',i:'⚡'}, service:{n:'טיפול',i:'🔧'}, tires:{n:'צמיגים ופנצ\'רים',i:'🛞'},
   repair:{n:'תיקונים',i:'🛠️'}, tolls:{n:'כבישי אגרה',i:'🛣️'}, parking:{n:'חניה',i:'🅿️'}, insurance:{n:'ביטוח',i:'🛡️'},
-  license:{n:'אגרת רישוי',i:'📄'}, other:{n:'אחר',i:'•'}
+  license:{n:'אגרת רישוי',i:'📄'}, lease:{n:'ליסינג',i:'🔑'}, other:{n:'אחר',i:'•'}
 };
 const NOVAT = new Set(['insurance','license']);
 const SERVICE_INTERVAL = 15000;
+let CAR='903'; try{ CAR=localStorage.getItem('niro903.car')||'903'; }catch(e){}
+let FCAR=CAR, RCAR=CAR;
+const carOf = x => x.car||'903';
+const EX = (c=CAR) => DB.expenses.filter(e=>c==='both'||carOf(e)===c);
+function withCar(c,fn){ const o=CAR; CAR=c; try{ return fn(); } finally{ CAR=o; } }
+const vatOf = e => e.vat!=null ? +e.vat : (NOVAT.has(e.cat)?0: +e.amount - +e.amount/(1+vatRate(e.date)));
 const css = n => getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim();
 const $ = id => document.getElementById(id);
 const fmt = (n,d=0) => (n==null||isNaN(n))?'–':n.toLocaleString('he-IL',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -281,6 +316,7 @@ function attach(){
       first[col]=false;
       DB[col]=snap.docs.map(d=>({id:d.id,...d.data()}));
       saveLocal(); render();
+      if(col==='expenses') applyPatches().then(render);
     });
   }
 }
@@ -303,9 +339,31 @@ async function del(col,id){
   if(fb&&user) fb.deleteDoc(fb.doc(fb.db,'users',user.uid,col,id));
 }
 
+
+/* ---------- one-off data patches (idempotent) ---------- */
+const PATCH404=[{"id": "404-fuel-2025-10", "item": {"date": "2025-10-28", "cat": "fuel", "amount": 185.99, "car": "404", "src": "import", "liters": 25.76, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2025-11", "item": {"date": "2025-11-28", "cat": "fuel", "amount": 405.53, "car": "404", "src": "import", "liters": 57.44, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2025-12", "item": {"date": "2025-12-28", "cat": "fuel", "amount": 382.82, "car": "404", "src": "import", "liters": 54.05, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2026-01", "item": {"date": "2026-01-28", "cat": "fuel", "amount": 387.34, "car": "404", "src": "import", "liters": 56.63, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2026-02", "item": {"date": "2026-02-28", "cat": "fuel", "amount": 390.75, "car": "404", "src": "import", "liters": 57.21, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2026-03", "item": {"date": "2026-03-28", "cat": "fuel", "amount": 202.13, "car": "404", "src": "import", "liters": 29.0, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2026-04", "item": {"date": "2026-04-28", "cat": "fuel", "amount": 226.24, "car": "404", "src": "import", "liters": 28.28, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2026-05", "item": {"date": "2026-05-28", "cat": "fuel", "amount": 614.92, "car": "404", "src": "import", "liters": 76.43, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2026-06", "item": {"date": "2026-06-28", "cat": "fuel", "amount": 440.14, "car": "404", "src": "import", "liters": 56.65, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2026-07", "item": {"date": "2026-07-28", "cat": "fuel", "amount": 572.49, "car": "404", "src": "import", "liters": 76.64, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2026-08", "item": {"date": "2026-08-28", "cat": "fuel", "amount": 228.26, "car": "404", "src": "import", "liters": 28.25, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2026-09", "item": {"date": "2026-09-28", "cat": "fuel", "amount": 221.12, "car": "404", "src": "import", "liters": 28.53, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-fuel-2026-10", "item": {"date": "2026-10-28", "cat": "fuel", "amount": 798.75, "car": "404", "src": "import", "liters": 101.41, "vendor": "פאמפי", "note": "סיכום חודשי", "monthly": true}}, {"id": "404-de-2026-08x", "item": {"date": "2026-08-19", "cat": "tolls", "amount": 66.95, "car": "404", "src": "import", "vendor": "כביש 6 (דרך ארץ)", "note": "חשבונית נפרדת"}}, {"id": "404-k6-2025-11", "item": {"date": "2025-11-20", "cat": "tolls", "amount": 5.68, "car": "404", "src": "import", "vendor": "כביש 6 צפון"}}, {"id": "404-k6-2026-07", "item": {"date": "2026-07-20", "cat": "tolls", "amount": 15.58, "car": "404", "src": "import", "vendor": "כביש 6 צפון"}}, {"id": "404-k6-2026-08", "item": {"date": "2026-08-20", "cat": "tolls", "amount": 14.82, "car": "404", "src": "import", "vendor": "כביש 6 צפון"}}, {"id": "404-k6-2026-09", "item": {"date": "2026-09-20", "cat": "tolls", "amount": 7.76, "car": "404", "src": "import", "vendor": "כביש 6 צפון"}}, {"id": "404-k6-2026-10", "item": {"date": "2026-10-20", "cat": "tolls", "amount": 18.77, "car": "404", "src": "import", "vendor": "כביש 6 צפון"}}, {"id": "404-carmel-2026-10", "item": {"date": "2026-10-28", "cat": "tolls", "amount": 72.48, "car": "404", "src": "import", "vendor": "מנהרות הכרמל", "trips": 6}}, {"id": "404-lease-2025-10", "item": {"date": "2025-10-14", "cat": "lease", "amount": 1793.43, "car": "404", "src": "import", "vat": 237.51, "vendor": "אלבר", "note": "ליסינג תשלום 1/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2025-11", "item": {"date": "2025-11-14", "cat": "lease", "amount": 1793.43, "car": "404", "src": "import", "vat": 237.51, "vendor": "אלבר", "note": "ליסינג תשלום 2/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2025-12", "item": {"date": "2025-12-14", "cat": "lease", "amount": 1793.43, "car": "404", "src": "import", "vat": 237.51, "vendor": "אלבר", "note": "ליסינג תשלום 3/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2026-01", "item": {"date": "2026-01-14", "cat": "lease", "amount": 1793.43, "car": "404", "src": "import", "vat": 237.51, "vendor": "אלבר", "note": "ליסינג תשלום 4/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2026-02", "item": {"date": "2026-02-14", "cat": "lease", "amount": 1793.43, "car": "404", "src": "import", "vat": 237.51, "vendor": "אלבר", "note": "ליסינג תשלום 5/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2026-03", "item": {"date": "2026-03-14", "cat": "lease", "amount": 1793.43, "car": "404", "src": "import", "vat": 237.51, "vendor": "אלבר", "note": "ליסינג תשלום 6/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2026-04", "item": {"date": "2026-04-14", "cat": "lease", "amount": 1793.43, "car": "404", "src": "import", "vat": 237.51, "vendor": "אלבר", "note": "ליסינג תשלום 7/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2026-05", "item": {"date": "2026-05-14", "cat": "lease", "amount": 1793.0, "car": "404", "src": "import", "vat": 237.08, "vendor": "אלבר", "note": "ליסינג תשלום 8/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2026-06", "item": {"date": "2026-06-14", "cat": "lease", "amount": 1808.86, "car": "404", "src": "import", "vat": 239.5, "vendor": "אלבר", "note": "ליסינג תשלום 9/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2026-07", "item": {"date": "2026-07-14", "cat": "lease", "amount": 1803.57, "car": "404", "src": "import", "vat": 238.69, "vendor": "אלבר", "note": "ליסינג תשלום 10/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2026-08", "item": {"date": "2026-08-14", "cat": "lease", "amount": 1803.57, "car": "404", "src": "import", "vat": 238.69, "vendor": "אלבר", "note": "ליסינג תשלום 11/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2026-09", "item": {"date": "2026-09-14", "cat": "lease", "amount": 1808.86, "car": "404", "src": "import", "vat": 239.5, "vendor": "אלבר", "note": "ליסינג תשלום 12/36 (כולל טיפולים, ביטוח ורישוי)"}}, {"id": "404-lease-2026-10", "item": {"date": "2026-10-14", "cat": "lease", "amount": 1821.2, "car": "404", "src": "import", "vat": 241.38, "vendor": "אלבר", "note": "ליסינג תשלום 13/36 (כולל טיפולים, ביטוח ורישוי)"}}];
+const PATCHES=[
+ ...PATCH404.map(x=>({op:'add',id:x.id,item:x.item})),
+ ...[['2026-11-04T18:49',10.481,11.01,'401956156'],['2026-11-05T15:07',10.6,11.13,'401958193'],['2026-11-06T03:50',10.013,10.51,'401959433'],
+     ['2026-11-08T13:39',10.552,11.08,'401964553'],['2026-11-09T13:37',10.566,11.09,'401966902'],['2026-11-10T15:11',10.503,11.03,'401970713'],
+     ['2026-11-11T19:18',10.148,10.66,'401973289']].map(([d,k,a,inv])=>({op:'add',id:'evedge-'+inv,item:{date:d,cat:'charging',amount:a,kwh:k,vendor:'EV Edge',note:'Ginegar',src:'import'}})),
+ {op:'add',id:'pango-2026-10',item:{date:'2026-10-25',cat:'parking',amount:3.18,vendor:'פנגו',note:'חניה ברחוב',src:'import'}},
+ {op:'update',match:e=>e.cat==='tolls'&&e.date.startsWith('2026-10-20')&&Math.abs(e.amount-112.08)<0.01,set:{amount:93.31,trips:22,note:'בניכוי 5 נסיעות של 404'}},
+ {op:'update',match:e=>e.cat==='charging'&&e.date.startsWith('2026-11-02')&&Math.abs(e.amount-10.53)<0.01&&e.kwh!==10.029,set:{kwh:10.029}},
+ {op:'update',match:e=>e.cat==='charging'&&e.date.startsWith('2026-11-03')&&Math.abs(e.amount-10.96)<0.01&&e.kwh===10.44,set:{kwh:10.44}},
+];
+let _patched=false;
+async function applyPatches(){
+  if(_patched) return; _patched=true;
+  for(const p of PATCHES){
+    if(p.op==='add'){ if(!DB.expenses.some(e=>e.id===p.id)) await put('expenses',{id:p.id,...p.item}); }
+    else for(const e of DB.expenses.filter(p.match)) await put('expenses',{...e,...p.set});
+  }
+}
+
 /* ---------- derived data ---------- */
 function odoPoints(){
-  const pts=[...DB.odometer.map(o=>({d:o.date.slice(0,10),km:+o.km})), ...DB.expenses.filter(e=>e.km).map(e=>({d:e.date.slice(0,10),km:+e.km}))];
+  const pts=[...DB.odometer.filter(o=>carOf(o)===CAR).map(o=>({d:o.date.slice(0,10),km:+o.km})), ...EX().filter(e=>e.km).map(e=>({d:e.date.slice(0,10),km:+e.km}))];
   pts.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:a.km-b.km);
   const out=[]; for(const p of pts){ if(!out.length||p.km>=out[out.length-1].km) out.push(p); }
   return out;
@@ -313,19 +371,20 @@ function odoPoints(){
 const dnum = d => new Date(d+'T12:00:00').getTime()/864e5;
 function kmAt(d){ // interpolated odometer at date
   const p=odoPoints(); if(!p.length) return null;
+  if(p.length<2 && CAR!=='903') return p[p.length-1].km;
   const t=dnum(d);
   if(t<=dnum(p[0].d)) return p[0].km;
   for(let i=1;i<p.length;i++){ const a=p[i-1],b=p[i]; if(t<=dnum(b.d)){ const f=(t-dnum(a.d))/Math.max(1,dnum(b.d)-dnum(a.d)); return a.km+f*(b.km-a.km);} }
   const r=recentRate(); return p[p.length-1].km + r*(t-dnum(p[p.length-1].d));
 }
 function recentRate(){ // km/day over last ~120 days of readings
-  const p=odoPoints(); if(p.length<2) return 140;
+  const p=odoPoints(); if(p.length<2) return CAR==='903'?140:0;
   const last=p[p.length-1]; let a=p[0];
   for(const q of p){ if(dnum(last.d)-dnum(q.d)>=90) a=q; }
   return (last.km-a.km)/Math.max(1,dnum(last.d)-dnum(a.d));
 }
 function months(){
-  const s=new Set(DB.expenses.map(e=>ym(e.date))); const p=odoPoints(); if(p.length) s.add(ym(p[0].d));
+  const s=new Set(EX().map(e=>ym(e.date))); const p=odoPoints(); if(p.length) s.add(ym(p[0].d));
   const arr=[...s].sort(); if(!arr.length) return [];
   const out=[]; let [y,m]=arr[0].split('-').map(Number); const end=ym(today());
   while(true){ const k=y+'-'+String(m).padStart(2,'0'); out.push(k); if(k>=end) break; m++; if(m>12){m=1;y++;} }
@@ -339,12 +398,12 @@ function kmInMonth(k){
   const a=kmAt(s), b=kmAt(end); if(a==null) return null; return Math.max(0,b-a);
 }
 function byMonthCat(){
-  const m={}; for(const e of DB.expenses){ const k=ym(e.date); (m[k]??={})[e.cat]=(m[k][e.cat]||0)+ +e.amount; } return m;
+  const m={}; for(const e of EX()){ const k=ym(e.date); (m[k]??={})[e.cat]=(m[k][e.cat]||0)+ +e.amount; } return m;
 }
 
 /* ---------- render ---------- */
 let LIST_FILTER='all', LIST_N=40;
-function render(){ renderHome(); if($('v-charts').classList.contains('on')) renderCharts(); if($('v-list').classList.contains('on')) renderList(); if($('v-report').classList.contains('on')) renderReport(); }
+function render(){ renderHome(); renderForecastHome(); if($('v-forecast').classList.contains('on')) renderForecast(); if($('v-charts').classList.contains('on')) renderCharts(); if($('v-list').classList.contains('on')) renderList(); if($('v-report').classList.contains('on')) renderReport(); }
 function catColor(c){ return css(c)||'#888'; }
 function itemHtml(e){
   const c=CATS[e.cat]||CATS.other; const col=catColor(e.cat);
@@ -362,12 +421,15 @@ function renderHome(){
   $('hMonthCmp').innerHTML=`<span class="mut small">ממוצע ${ils(avg)}</span><br><span class="small">${fmt(day/dim*100)}% מהחודש עבר</span>`;
   $('hMonthLeg').innerHTML=Object.entries(cm).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<span><i style="background:${catColor(c)}"></i>${CATS[c]?.n||c} ${ils(v)}</span>`).join('')||'<span>עוד אין הוצאות החודש</span>';
   // km
-  const p=odoPoints(); const last=p[p.length-1]; const est=Math.round(kmAt(today()));
-  $('hKm').textContent=fmt(est);
+  const p=odoPoints(); const last=p[p.length-1]; const est=Math.round(kmAt(today())||0);
+  $('hKm').textContent=last?fmt(est):'–';
+  if(!last){ $('hKmSub').textContent='לחץ לעדכון'; $('hKmM').textContent='–'; }
+  else {
   $('hKmSub').textContent=last?(last.d===today()?'עודכן היום':`משוער · נמדד ${fmt(last.km)} ב־${new Date(last.d).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'})}`):'';
-  $('hKmM').textContent=fmt(recentRate()*30.4);
+  $('hKmM').textContent=recentRate()?fmt(recentRate()*30.4):'–';
+  if(CAR!=='903'&&p.length<2) $('hKmSub').textContent=`נמדד ב־${new Date(last.d).toLocaleDateString('he-IL',{day:'numeric',month:'numeric',year:'2-digit'})}`; }
   // service
-  const svc=DB.expenses.filter(e=>e.cat==='service'&&e.km).sort((a,b)=>b.km-a.km)[0];
+  const svc=EX().filter(e=>e.cat==='service'&&e.km).sort((a,b)=>b.km-a.km)[0];
   if(svc){
     const next=svc.km+SERVICE_INTERVAL, left=next-est, pct=Math.min(100,Math.max(0,(est-svc.km)/SERVICE_INTERVAL*100));
     const days=left/Math.max(1,recentRate());
@@ -382,20 +444,20 @@ function renderHome(){
   let s=0,k=0; for(const m of ms){ s+=Object.values(bm[m]||{}).reduce((a,b)=>a+b,0); k+=kmInMonth(m)||0; }
   $('hCpk').textContent=k?'₪'+fmt(s/k,2):'–';
   // alerts
-  const al=[]; const ins=DB.expenses.filter(e=>e.cat==='insurance'||e.cat==='license');
+  const al=[]; const ins=EX().filter(e=>e.cat==='insurance'||e.cat==='license');
   for(const cat of ['insurance','license']){
     const l=ins.filter(e=>e.cat===cat).sort((a,b)=>a.date<b.date?1:-1)[0];
     if(l){ const m=(l.note||'').match(/עד (\d{4}-\d\d-\d\d)/); if(m){ const dd=(dnum(m[1])-dnum(today())); if(dd<45&&dd>-30) al.push(`${cat==='insurance'?'🛡️ הביטוח':'📄 הרישוי'} מסתיים ב־${new Date(m[1]).toLocaleDateString('he-IL')}`);} }
   }
   $('hAlerts').style.display=al.length?'':'none'; $('hAlerts').innerHTML=al.map(a=>`<div class="warn">${a}</div>`).join('');
-  const rec=[...DB.expenses].sort((a,b)=>a.date<b.date?1:-1).slice(0,6);
+  const rec=[...EX()].sort((a,b)=>a.date<b.date?1:-1).slice(0,6);
   $('hRecent').innerHTML=rec.map(itemHtml).join('');
 }
 function consumptionSeries(){
   // monthly liters for months where fuel is 903-only, divided by km
   const out=[]; const ms=months();
   for(const k of ms){
-    const f=DB.expenses.filter(e=>e.cat==='fuel'&&ym(e.date)===k);
+    const f=EX().filter(e=>e.cat==='fuel'&&ym(e.date)===k);
     if(!f.length||f.some(e=>e.shared)) { out.push({k,v:null}); continue; }
     const L=f.reduce((a,e)=>a+(+e.liters||0),0), km=kmInMonth(k);
     out.push({k,v: (L&&km>500)? L/km*100 : null});
@@ -413,7 +475,19 @@ function baseOpts(extra={}){
 const mlabel=k=>{const [y,m]=k.split('-');return m+'/'+y.slice(2);};
 function renderCharts(){
   if(typeof Chart==='undefined') return;
-  const ms=months().slice(-RANGE); const bm=byMonthCat(); const L=ms.map(mlabel);
+  const ms=months().slice(-RANGE); const bm=byMonthView(); const L=ms.map(mlabel);
+  const fuelM=ms.map(k=>EX().filter(e=>e.cat==='fuel'&&ym(e.date)===k));
+  const fA=fuelM.map(a=>Math.round(a.reduce((x,e)=>x+ +e.amount,0))), fL=fuelM.map(a=>Math.round(a.reduce((x,e)=>x+(+e.liters||0),0))||null);
+  mk('cFuel',{type:'bar',data:{labels:L,datasets:[
+     {type:'bar',label:'₪',data:fA,backgroundColor:css('fuel'),borderRadius:3,yAxisID:'y'},
+     {type:'line',label:'ליטרים',data:fL,borderColor:css('tx'),backgroundColor:css('tx'),pointRadius:2,tension:.3,yAxisID:'y1'}]},
+   options:baseOpts({plugins:{legend:{display:true,rtl:true,labels:{color:css('mut'),boxWidth:10}},tooltip:{rtl:true}},
+     scales:{x:{ticks:{color:css('mut'),maxRotation:0,autoSkipPadding:10,font:{size:11}},grid:{display:false}},
+       y:{position:'left',ticks:{color:css('fuel'),callback:v=>'₪'+v},grid:{color:css('line')},beginAtZero:true},
+       y1:{position:'right',ticks:{color:css('mut'),callback:v=>v+' ל׳'},grid:{display:false},beginAtZero:true}}})});
+  const full=ms.filter(k=>k<ym(today())); const fi=full.map(k=>ms.indexOf(k));
+  const avgA=fi.reduce((a,i)=>a+fA[i],0)/Math.max(1,fi.length), avgL=fi.reduce((a,i)=>a+fL[i],0)/Math.max(1,fi.length);
+  $('fuelSum').textContent=`ממוצע ${ils(avgA)} ו־${fmt(avgL)} ליטר לחודש · ${ils(avgL?avgA/avgL:0,2)} לליטר`;
   const cats=Object.keys(CATS).filter(c=>ms.some(k=>bm[k]?.[c]));
   mk('cMonthly',{type:'bar',data:{labels:L,datasets:cats.map(c=>({label:CATS[c].n,data:ms.map(k=>Math.round(bm[k]?.[c]||0)),backgroundColor:catColor(c),borderRadius:2,stack:'s'}))},
     options:baseOpts({scales:{x:{stacked:true,ticks:{color:css('mut'),maxRotation:0,autoSkipPadding:8,font:{size:10}},grid:{display:false}},y:{stacked:true,ticks:{color:css('mut'),font:{size:11}},grid:{color:css('line')}}}})});
@@ -427,91 +501,223 @@ function renderCharts(){
   mk('cCpk',{type:'line',data:{labels:L,datasets:[{data:ms.map((k,i)=>{const s=Object.values(bm[k]||{}).reduce((a,b)=>a+b,0);return kms[i]>500?+(s/kms[i]).toFixed(2):null;}),borderColor:css('warn'),backgroundColor:css('warn'),tension:.3,pointRadius:2,spanGaps:true}]},options:baseOpts()});
   const cs=consumptionSeries().slice(-RANGE);
   mk('cCons',{type:'line',data:{labels:cs.map(x=>mlabel(x.k)),datasets:[{data:cs.map(x=>x.v?+x.v.toFixed(1):null),borderColor:css('fuel'),backgroundColor:css('fuel'),tension:.3,pointRadius:2,spanGaps:false}]},options:baseOpts()});
-  const ev=ms.map((k,i)=>{const kwh=DB.expenses.filter(e=>e.cat==='charging'&&ym(e.date)===k).reduce((a,e)=>a+(+e.kwh||0),0);return kms[i]>500?+Math.min(100,kwh/16*100/kms[i]*100).toFixed(1):null;});
+  const ev=ms.map((k,i)=>{const kwh=EX().filter(e=>e.cat==='charging'&&ym(e.date)===k).reduce((a,e)=>a+(+e.kwh||0),0);return kms[i]>500?+Math.min(100,kwh/16*100/kms[i]*100).toFixed(1):null;});
   mk('cEv',{type:'bar',data:{labels:L,datasets:[{data:ev,backgroundColor:css('charging'),borderRadius:3}]},options:baseOpts({scales:{x:{ticks:{color:css('mut'),maxRotation:0,autoSkipPadding:10,font:{size:11}},grid:{display:false}},y:{ticks:{color:css('mut'),callback:v=>v+'%'},grid:{color:css('line')},beginAtZero:true}}})});
-  const ppl=ms.map(k=>{const f=DB.expenses.filter(e=>e.cat==='fuel'&&ym(e.date)===k&&e.liters);const L=f.reduce((a,e)=>a+ +e.liters,0),A=f.reduce((a,e)=>a+ +e.amount,0);return L?+(A/L).toFixed(2):null;});
+  const ppl=ms.map(k=>{const f=EX().filter(e=>e.cat==='fuel'&&ym(e.date)===k&&e.liters);const L=f.reduce((a,e)=>a+ +e.liters,0),A=f.reduce((a,e)=>a+ +e.amount,0);return L?+(A/L).toFixed(2):null;});
   mk('cPpl',{type:'line',data:{labels:L,datasets:[{data:ppl,borderColor:css('fuel'),tension:.3,pointRadius:2,spanGaps:true}]},options:baseOpts({scales:{x:{ticks:{color:css('mut'),maxRotation:0,autoSkipPadding:10,font:{size:11}},grid:{display:false}},y:{ticks:{color:css('mut'),callback:v=>'₪'+(+v).toFixed(1)},grid:{color:css('line')}}}})});
 }
 function renderList(){
-  const fs=[['all','הכל'],...Object.entries(CATS).map(([k,v])=>[k,v.i+' '+v.n])];
+  const present=new Set(EX().map(e=>e.cat));
+  const fs=[['all','הכל'],...Object.entries(CATS).filter(([k])=>present.has(k)).map(([k,v])=>[k,v.i+' '+v.n])];
   $('listFilters').innerHTML=fs.map(([k,n])=>`<button class="chip ${LIST_FILTER===k?'on':''}" onclick="LIST_FILTER='${k}';LIST_N=40;renderList()">${n}</button>`).join('');
-  const arr=DB.expenses.filter(e=>LIST_FILTER==='all'||e.cat===LIST_FILTER).sort((a,b)=>a.date<b.date?1:-1);
+  const arr=EX().filter(e=>LIST_FILTER==='all'||e.cat===LIST_FILTER).sort((a,b)=>a.date<b.date?1:-1);
   $('listAll').innerHTML=arr.slice(0,LIST_N).map(itemHtml).join('')||'<div class="mut">אין רשומות</div>';
   $('moreBtn').style.display=arr.length>LIST_N?'':'none';
 }
 $('moreBtn').onclick=()=>{LIST_N+=60;renderList();};
 function reportRows(y){
   const rows={};
-  for(const e of DB.expenses){ if(!e.date.startsWith(y)) continue;
+  for(const e of EX(RCAR)){ if(!e.date.startsWith(y)) continue;
     const r=rows[e.cat]??={cat:e.cat,n:0,gross:0,vat:0};
-    r.n++; r.gross+= +e.amount; if(!NOVAT.has(e.cat)) r.vat+= +e.amount - +e.amount/(1+vatRate(e.date)); }
+    r.n++; r.gross+= +e.amount; r.vat+=vatOf(e); }
   return Object.values(rows).sort((a,b)=>b.gross-a.gross);
 }
 function renderReport(){
-  const ys=[...new Set(DB.expenses.map(e=>e.date.slice(0,4)))].sort().reverse();
-  const sel=$('repYear'); const cur=sel.value||ys[0];
+  document.querySelectorAll('#repCarSeg button').forEach(b=>b.classList.toggle('on',b.dataset.c===RCAR));
+  const ys=[...new Set(EX(RCAR).map(e=>e.date.slice(0,4)))].sort().reverse();
+  const sel=$('repYear'); const cur=ys.includes(sel.value)?sel.value:ys[0];
   sel.innerHTML=ys.map(y=>`<option ${y===cur?'selected':''}>${y}</option>`).join('');
   const rows=reportRows(cur); const T=rows.reduce((a,r)=>({gross:a.gross+r.gross,vat:a.vat+r.vat}),{gross:0,vat:0});
   $('repTable').innerHTML=`<table><tr><th>קטגוריה</th><th class="n">לפני מע"מ</th><th class="n">מע"מ</th><th class="n">סה"כ</th></tr>`+
    rows.map(r=>`<tr><td>${CATS[r.cat].i} ${CATS[r.cat].n}</td><td class="n">${fmt(r.gross-r.vat)}</td><td class="n">${fmt(r.vat)}</td><td class="n">${fmt(r.gross)}</td></tr>`).join('')+
    `<tr class="tot"><td>סה"כ</td><td class="n">${fmt(T.gross-T.vat)}</td><td class="n">${fmt(T.vat)}</td><td class="n">${fmt(T.gross)}</td></tr></table>`+
-   (DB.expenses.some(e=>e.shared&&e.date.startsWith(cur))?`<div class="small warn" style="margin-top:8px">חלק מחודשי הדלק כוללים גם את 404 (חשבון פאמפי משותף)</div>`:'');
-  $('dataInfo').textContent=`${DB.expenses.length} הוצאות · ${odoPoints().length} מדידות ק"מ · מאז ${DB.expenses.map(e=>e.date).sort()[0]?.slice(0,7)||''}`;
+   (EX(RCAR).some(e=>e.shared&&e.date.startsWith(cur))?`<div class="small warn" style="margin-top:8px">חלק מחודשי הדלק כוללים גם את 404 (חשבון פאמפי משותף)</div>`:'');
+  $('dataInfo').textContent=`${DB.expenses.length} הוצאות (903: ${EX('903').length}, 404: ${EX('404').length}) · מאז ${DB.expenses.map(e=>e.date).sort()[0]?.slice(0,7)||''}`;
 }
 $('repYear').onchange=renderReport;
 function csvFor(y){
-  const head='תאריך,קטגוריה,ספק,הערה,ליטרים,קוט"ש,ק"מ,לפני מע"מ,מע"מ,סה"כ';
-  const lines=DB.expenses.filter(e=>e.date.startsWith(y)).sort((a,b)=>a.date<b.date?-1:1).map(e=>{
-    const g=+e.amount, v=NOVAT.has(e.cat)?0:g-g/(1+vatRate(e.date));
-    return [e.date.slice(0,10),CATS[e.cat].n,e.vendor||'',(e.note||'').replace(/,/g,' '),e.liters||'',e.kwh||'',e.km||'',(g-v).toFixed(2),v.toFixed(2),g.toFixed(2)].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',');
+  const head='תאריך,רכב,קטגוריה,ספק,הערה,ליטרים,קוט"ש,ק"מ,לפני מע"מ,מע"מ,סה"כ';
+  const lines=EX(RCAR).filter(e=>e.date.startsWith(y)).sort((a,b)=>a.date<b.date?-1:1).map(e=>{
+    const g=+e.amount, v=vatOf(e);
+    return [e.date.slice(0,10),carOf(e),CATS[e.cat].n,e.vendor||'',(e.note||'').replace(/,/g,' '),e.liters||'',e.kwh||'',e.km||'',(g-v).toFixed(2),v.toFixed(2),g.toFixed(2)].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',');
   });
   return '﻿'+head+'\n'+lines.join('\n');
 }
 async function exportCsv(dl){
   const y=$('repYear').value, s=csvFor(y);
-  if(dl){ try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s],{type:'text/csv'})); a.download=`niro903_${y}.csv`; a.click(); toast('הקובץ ירד'); return; }catch(e){} }
+  if(dl){ try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s],{type:'text/csv'})); a.download=`cars_${RCAR}_${y}.csv`; a.click(); toast('הקובץ ירד'); return; }catch(e){} }
   try{ await navigator.clipboard.writeText(s); toast('הועתק'); }catch(e){ toast('לא הצלחתי להעתיק'); }
 }
 function backup(){ const s=JSON.stringify(DB); try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s],{type:'application/json'})); a.download='niro903_backup.json'; a.click(); }catch(e){} }
 
+
+
+/* ---------- spreading annual payments ---------- */
+let SPREAD=true; try{ SPREAD=localStorage.getItem('niro903.spread')!=='0'; }catch(e){}
+const ANNUAL=new Set(['insurance','license']);
+function shiftMonth(k,n){ let [y,m]=k.split('-').map(Number); m+=n; while(m>12){m-=12;y++;} while(m<1){m+=12;y--;} return y+'-'+String(m).padStart(2,'0'); }
+function byMonthView(){
+  if(!SPREAD) return byMonthCat();
+  const m={};
+  for(const e of EX()){
+    const k=ym(e.date);
+    if(ANNUAL.has(e.cat)){ for(let i=0;i<12;i++){ const kk=shiftMonth(k,i); (m[kk]??={})[e.cat]=(m[kk][e.cat]||0)+ +e.amount/12; } }
+    else (m[k]??={})[e.cat]=(m[k][e.cat]||0)+ +e.amount;
+  }
+  return m;
+}
+function setSpread(v){ SPREAD=v; try{localStorage.setItem('niro903.spread',v?'1':'0');}catch(e){}
+  document.querySelectorAll('#spreadSeg button,#spreadSeg2 button').forEach(b=>b.classList.toggle('on',(b.dataset.s==='1')===SPREAD));
+  renderCharts(); renderForecast(); }
+
+/* ---------- forecast ---------- */
+const TIRE_KM_DEFAULT=200000, TIRE_INTERVAL=100000;
+const addDays=(d,n)=>new Date(new Date(d+'T12:00:00').getTime()+n*864e5).toISOString().slice(0,10);
+function dateForKm(km){ const est=kmAt(today()); return addDays(today(), Math.max(0,(km-est)/Math.max(1,recentRate()))); }
+function forecast(){
+  const t=today(), end=addDays(t,365), est=kmAt(t), items=[];
+  // service every 15k
+  const svcs=EX().filter(e=>e.cat==='service'&&e.km).sort((a,b)=>a.km-b.km);
+  if(svcs.length){
+    const avg=svcs.slice(-4).reduce((a,e)=>a+ +e.amount,0)/Math.min(4,svcs.length);
+    for(let k=svcs[svcs.length-1].km+SERVICE_INTERVAL;;k+=SERVICE_INTERVAL){ const d=dateForKm(k); if(d>end) break;
+      items.push({date:d,cat:'service',amount:Math.round(avg/10)*10,title:`טיפול ${fmt(Math.round(k/1000))} אלף`,sub:`ב־${fmt(k)} ק"מ`,big:true}); }
+  }
+  // tires
+  const sets=EX().filter(e=>e.cat==='tires'&&+e.amount>1000).sort((a,b)=>a.date<b.date?-1:1);
+  const lastSet=sets[sets.length-1];
+  let tireKm=TIRE_KM_DEFAULT; if(lastSet&&lastSet.date>'2026-11-12') tireKm=(lastSet.km||kmAt(lastSet.date.slice(0,10)))+TIRE_INTERVAL;
+  const tireAmt=lastSet?Math.round(+lastSet.amount/10)*10:4800;
+  for(let k=tireKm;;k+=TIRE_INTERVAL){ const d=dateForKm(k); if(d>end) break;
+    items.push({date:d,cat:'tires',amount:tireAmt,title:'סט צמיגים',sub:`ב־${fmt(k)} ק"מ · לפי המחיר האחרון`,big:true}); }
+  // insurance & license — renew after the last period ends
+  for(const cat of ['insurance','license']){
+    const recs=EX().filter(e=>e.cat===cat&&/עד \d{4}-\d\d-\d\d/.test(e.note||''));
+    if(!recs.length) continue;
+    const lastEnd=recs.map(e=>e.note.match(/עד (\d{4}-\d\d-\d\d)/)[1]).sort().pop();
+    const cur=recs.filter(e=>e.note.includes(lastEnd));
+    let due=cat==='insurance'?addDays(lastEnd,1):addDays(lastEnd,-14);
+    while(due<t) due=addDays(due,365);
+    if(due<=end) items.push({date:due,cat,amount:Math.round(cur.reduce((a,e)=>a+ +e.amount,0)),
+      title:cat==='insurance'?'חידוש ביטוח':'אגרת רישוי',sub:cat==='insurance'?cur.map(e=>e.note.split(' עד')[0]).join(' + ')+' · לפי השנה האחרונה':'לפי השנה האחרונה',big:true});
+  }
+  // running costs: avg of last 6 full months
+  const cm=ym(t), ms=months().filter(k=>k<cm).slice(-6), bm=byMonthCat();
+  const run={};
+  const leases=EX().filter(e=>e.cat==='lease').sort((a,b)=>a.date<b.date?-1:1);
+  if(leases.length && leases[leases.length-1].date>=addDays(t,-62)) run.lease=+leases[leases.length-1].amount;
+  for(const c of ['fuel','tolls','parking']) run[c]=ms.reduce((a,k)=>a+(bm[k]?.[c]||0),0)/Math.max(1,ms.length);
+  const from60=addDays(t,-60); // charging habits change fast — use the last 60 days
+  run.charging=EX().filter(e=>e.cat==='charging'&&e.date.slice(0,10)>=from60).reduce((a,e)=>a+ +e.amount,0)/60*30.4;
+  const ms12=months().filter(k=>k<cm).slice(-12);
+  run.repair=ms12.reduce((a,k)=>a+(bm[k]?.repair||0),0)/12 + EX().filter(e=>e.cat==='tires'&&+e.amount<=1000&&ms12.includes(ym(e.date))).reduce((a,e)=>a+ +e.amount,0)/12;
+  // month buckets: current month (remaining share) + 12 ahead
+  const out=[]; let [y,m]=cm.split('-').map(Number);
+  for(let i=0;i<13;i++){
+    const k=y+'-'+String(m).padStart(2,'0');
+    const frac=new Date().getDate()/new Date(y,m,0).getDate();
+    const share=i===0?1-frac:i===12?frac:1;
+    const big=items.filter(x=>ym(x.date)===k);
+    const runItems=Object.entries(run).filter(([,v])=>v>0).map(([c,v])=>({cat:c,amount:v*share}));
+    out.push({k,share,big,run:runItems,total:big.reduce((a,x)=>a+x.amount,0)+runItems.reduce((a,x)=>a+x.amount,0)});
+    m++; if(m>12){m=1;y++;}
+  }
+  const total=out.slice(0,13).reduce((a,o)=>a+o.total,0);
+  return {months:out,items:items.sort((a,b)=>a.date<b.date?-1:1),run,total,est};
+}
+function forecastFor(c){
+  if(c!=='both') return withCar(c,forecast);
+  const a=withCar('903',forecast), b=withCar('404',forecast);
+  const months=a.months.map((o,i)=>{ const p=b.months[i]; return {k:o.k,share:o.share,big:[...o.big,...p.big],run:[...o.run,...p.run],total:o.total+p.total}; });
+  const run={}; for(const f of [a,b]) for(const [k,v] of Object.entries(f.run)) run[k]=(run[k]||0)+v;
+  return {months,items:[...a.items,...b.items].sort((x,y)=>x.date<y.date?-1:1),run,total:a.total+b.total};
+}
+const mname=k=>new Date(k+'-15').toLocaleDateString('he-IL',{month:'long',year:'numeric'});
+function fcItemHtml(x){ const c=CATS[x.cat], col=catColor(x.cat);
+  const when=new Date(x.date).toLocaleDateString('he-IL',{day:'numeric',month:'short',year:'2-digit'});
+  return `<div class="it"><div class="ic" style="background:${col}22;color:${col}">${c.i}</div><div class="t"><b>${x.title}</b><small>${'בערך '+when} · ${x.sub}</small></div><div class="a">${ils(x.amount)}</div></div>`; }
+function renderForecastHome(){
+  const f=forecastFor(CAR), lim=addDays(today(),60);
+  const soon=f.items.filter(x=>x.date<=lim);
+  const runMonth=Object.values(f.run).reduce((a,b)=>a+b,0);
+  $('hFcList').innerHTML=soon.map(fcItemHtml).join('')+
+    `<div class="it"><div class="ic" style="background:${css('card2')}">∑</div><div class="t"><b>הוצאות שוטפות</b><small>${CAR==='903'?'דלק, טעינה, אגרות, חניה ותיקונים קטנים':'ליסינג, דלק, אגרות וחניה'}</small></div><div class="a">${ils(runMonth)} לחודש</div></div>`;
+}
+function renderForecast(){
+  document.querySelectorAll('#fcCarSeg button').forEach(b=>b.classList.toggle('on',b.dataset.c===FCAR));
+  const f=forecastFor(FCAR);
+  $('fcTotal').textContent=ils(f.total);
+  const bigSum=f.items.reduce((a,x)=>a+x.amount,0);
+  $('fcSub').textContent=`${ils(f.total/12)} לחודש בממוצע · מתוכם ${ils(bigSum)} תשלומים גדולים`;
+  const byCat={}; f.months.forEach(o=>{o.big.forEach(x=>byCat[x.cat]=(byCat[x.cat]||0)+x.amount); o.run.forEach(x=>byCat[x.cat]=(byCat[x.cat]||0)+x.amount);});
+  $('fcLeg').innerHTML=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<span><i style="background:${catColor(c)}"></i>${CATS[c].n} ${ils(v)}</span>`).join('');
+  $('fcBig').innerHTML=f.items.map(fcItemHtml).join('')||'<div class="mut">אין</div>';
+  $('fcMonths').innerHTML='<table><tr><th>חודש</th><th>מה צפוי</th><th class="n">סכום</th></tr>'+f.months.map((o,i)=>
+    `<tr><td>${mname(o.k)}${i===0?' <span class="pill">יתרה</span>':''}</td><td class="small">${o.big.map(x=>CATS[x.cat].i+' '+x.title).join('<br>')||'<span class="mut">שוטף</span>'}</td><td class="n">${ils(o.total)}</td></tr>`).join('')+'</table>';
+  if(typeof Chart==='undefined') return;
+  const bms=(FCAR==='both'?['903','404']:[FCAR]).map(c=>withCar(c,byMonthView));
+  const bm={}; for(const x of bms) for(const [k,v] of Object.entries(x)) for(const [c,a] of Object.entries(v)) (bm[k]??={})[c]=(bm[k][c]||0)+a;
+  const cm=ym(today()), past=[...new Set(bms.flatMap(x=>Object.keys(x)))].filter(k=>k<cm).sort().slice(-12);
+  const labels=[...past,...f.months.map(o=>o.k)].map(mlabel);
+  const actual=[...past.map(k=>Math.round(Object.values(bm[k]||{}).reduce((a,b)=>a+b,0))),...f.months.map((o,i)=>i===0?Math.round(Object.values(bm[cm]||{}).reduce((a,b)=>a+b,0)):null)];
+  const annualYear=f.items.filter(x=>ANNUAL.has(x.cat)).reduce((a,x)=>a+x.amount,0);
+  const fc=[...past.map(()=>null),...f.months.map(o=>Math.round(SPREAD? o.total - o.big.filter(x=>ANNUAL.has(x.cat)).reduce((a,x)=>a+x.amount,0) + annualYear/12*o.share : o.total))];
+  mk('cFc',{type:'bar',data:{labels,datasets:[{label:'בפועל',data:actual,backgroundColor:css('acc2'),borderRadius:3,stack:'a'},{label:'צפי',data:fc,backgroundColor:css('acc2')+'55',borderColor:css('acc2'),borderWidth:1,borderDash:[4,3],borderRadius:3,stack:'a'}]},
+    options:baseOpts({plugins:{legend:{display:true,rtl:true,labels:{color:css('mut'),boxWidth:10}},tooltip:{rtl:true}}})});
+}
+
+/* ---------- car switch ---------- */
+function setCar(c){ CAR=c; FCAR=c; RCAR=c; try{localStorage.setItem('niro903.car',c);}catch(e){}
+  document.body.classList.toggle('c404',c==='404');
+  $('carTitle').innerHTML=c==='903'?'נירו <span>903</span>':'רכב <span>404</span>';
+  document.querySelectorAll('#carSw button').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
+  LIST_FILTER='all'; render(); if($('v-charts').classList.contains('on')) renderCharts(); }
+document.querySelectorAll('#carSw button').forEach(b=>b.onclick=()=>setCar(b.dataset.c));
+document.querySelectorAll('#fcCarSeg button').forEach(b=>b.onclick=()=>{FCAR=b.dataset.c; renderForecast();});
+document.querySelectorAll('#repCarSeg button').forEach(b=>b.onclick=()=>{RCAR=b.dataset.c; renderReport();});
 /* ---------- nav ---------- */
 function go(v){
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
   document.querySelectorAll('nav button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   window.scrollTo(0,0);
-  if(v==='charts') setTimeout(renderCharts,10); if(v==='list') renderList(); if(v==='report') renderReport();
+  if(v==='charts') setTimeout(renderCharts,10); if(v==='forecast') setTimeout(renderForecast,10); if(v==='list') renderList(); if(v==='report') renderReport();
   try{ history.replaceState(null,'','#'+v);}catch(e){}
 }
-document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b));RANGE=+b.dataset.r;renderCharts();});
+document.querySelectorAll('#spreadSeg button,#spreadSeg2 button').forEach(b=>{b.classList.toggle('on',(b.dataset.s==='1')===SPREAD); b.onclick=()=>setSpread(b.dataset.s==='1');});
+document.querySelectorAll('#rangeSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#spreadSeg button,#spreadSeg2 button').forEach(b=>{b.classList.toggle('on',(b.dataset.s==='1')===SPREAD); b.onclick=()=>setSpread(b.dataset.s==='1');});
+document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b));RANGE=+b.dataset.r;renderCharts();});
 
 /* ---------- add / edit ---------- */
-const TYPES=[['fill','⛽ תדלוק'],['charge','⚡ טעינה'],['service','🔧 טיפול'],['tires','🛞 צמיג/פנצ\'ר'],['repair','🛠️ תיקון'],['parking','🅿️ חניה'],['tolls','🛣️ אגרה'],['insurance','🛡️ ביטוח'],['license','📄 רישוי'],['other','• אחר'],['odo','📍 רק ק"מ']];
+const TYPES404=['fill','lease','tolls','parking','repair','other','odo'];
+const TYPES=[['fill','⛽ תדלוק'],['charge','⚡ טעינה'],['service','🔧 טיפול'],['tires','🛞 צמיג/פנצ\'ר'],['repair','🛠️ תיקון'],['parking','🅿️ חניה'],['tolls','🛣️ אגרה'],['insurance','🛡️ ביטוח'],['license','📄 רישוי'],['lease','🔑 ליסינג'],['other','• אחר'],['odo','📍 רק ק"מ']];
 let ADD={type:'fill',mode:'manual',editId:null,photos:{}};
 function nowLocal(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); }
 function openAdd(type,edit){
+  if(!edit) EDIT=null;
   ADD={type,mode:'manual',editId:edit?.id||null,photos:{}};
   $('addForm').reset(); $('fDate').value=edit?(edit.date.length>10?edit.date:edit.date+'T12:00'):nowLocal();
   if(edit){ $('fKm').value=edit.km||''; $('fLit').value=edit.liters||''; $('fKwh').value=edit.kwh||''; $('fAmt').value=edit.amount||''; $('fVend').value=edit.vendor||''; $('fNote').value=edit.note||''; }
   ['phOdo','phPump'].forEach(id=>{const l=$(id); l.classList.remove('has'); l.style.backgroundImage=''; });
   $('ocrTx').textContent='';
   $('delBtn').style.display=edit?'':'none';
-  $('addTitle').textContent=edit?'עריכה':'הוספה';
+  $('addTitle').textContent=(edit?'עריכה':'הוספה')+' · '+(edit?carOf(edit):CAR);
   setType(type); setMode('manual');
   $('addModal').classList.add('on');
 }
 function closeAdd(){ $('addModal').classList.remove('on'); }
 function setType(t){
   ADD.type=t;
-  $('typeChips').innerHTML=TYPES.map(([k,n])=>`<button type="button" class="chip ${k===t?'on':''}" onclick="setType('${k}')">${n}</button>`).join('');
+  $('typeChips').innerHTML=TYPES.filter(([k])=>CAR==='903'?k!=='lease':TYPES404.includes(k)).map(([k,n])=>`<button type="button" class="chip ${k===t?'on':''}" onclick="setType('${k}')">${n}</button>`).join('');
   const fill=t==='fill', ch=t==='charge', odo=t==='odo';
-  $('fillBox').style.display=fill?'':'none';
+  $('fillBox').style.display=(fill&&CAR==='903')?'':'none';
+  $('fKm').placeholder=CAR==='903'?'182,450':'';
   $('litBox').style.display=fill?'':'none';
   $('kwhBox').style.display=ch?'':'none';
   $('kmBox').style.display=(ch)?'none':'';
   $('fAmt').parentElement; $('amtLbl').style.display=$('fAmt').style.display=odo?'none':'';
   $('vendBox').style.display=odo?'none':''; $('fileBox').style.display=(fill||odo)?'none':'';
   $('fHint').textContent= fill?'הסכום לא חובה — הוא יגיע מדו"ח פאמפי בסוף החודש.': t==='service'?'הק"מ מהחשבונית משמש לחישוב הטיפול הבא.':'';
-  const vend={fill:['פאמפי'],charge:['EV Edge','On EV','Sonol EVI'],service:['Kia Nazareth'],tires:['צמיגי העמקים'],parking:['פנגו'],tolls:['כביש 6 (דרך ארץ)','כביש 6 צפון','מנהרות הכרמל'],insurance:['הראל'],license:['משרד התחבורה']}[t]||[];
+  const vend={fill:['פאמפי'],charge:['EV Edge','On EV','Sonol EVI'],service:['Kia Nazareth'],tires:['צמיגי העמקים'],parking:['פנגו'],tolls:['כביש 6 (דרך ארץ)','כביש 6 צפון','מנהרות הכרמל'],lease:['אלבר'],insurance:['הראל'],license:['משרד התחבורה']}[t]||[];
   $('vendList').innerHTML=vend.map(v=>`<option value="${v}">`).join('');
   if(!ADD.editId&&vend[0]&&!$('fVend').value) $('fVend').value=vend[0];
 }
@@ -545,10 +751,10 @@ async function saveAdd(ev){
   const t=ADD.type, date=$('fDate').value, km=+$('fKm').value||null;
   const lastKm=odoPoints().filter(p=>p.d<=date.slice(0,10)).pop();
   if(km && lastKm && km<lastKm.km && !ADD.editId){ if(!confirmInline(`הק"מ נמוך מהמדידה הקודמת (${fmt(lastKm.km)}). לשמור בכל זאת?`)) return; }
-  if(t==='odo'){ if(!km) return toast('הזן ק"מ'); await put('odometer',{id:ADD.editId||uid(),date,km,src:'manual'}); }
+  if(t==='odo'){ if(!km) return toast('הזן ק"מ'); await put('odometer',{id:ADD.editId||uid(),date,km,car:CAR,src:'manual'}); }
   else{
     const cat={fill:'fuel',charge:'charging'}[t]||t;
-    const item={id:ADD.editId||uid(),date,cat,amount:+$('fAmt').value||0,vendor:$('fVend').value.trim(),note:$('fNote').value.trim(),src:'manual'};
+    const item={id:ADD.editId||uid(),car:(EDIT&&ADD.editId?carOf(EDIT):CAR),date,cat,amount:+$('fAmt').value||0,vendor:$('fVend').value.trim(),note:$('fNote').value.trim(),src:'manual'};
     if(t==='fill'){ item.liters=+$('fLit').value||null; item.km=km; item.pending=!item.amount; }
     else if(t==='charge'){ item.kwh=+$('fKwh').value||null; }
     else if(km) item.km=km;
@@ -569,8 +775,8 @@ let _tt; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add
 
 /* ---------- boot ---------- */
 if(!loadLocal()) seed(); else reseedIfNeeded();
-setSync(); render();
-const h=(location.hash||'').slice(1); if(['charts','list','report'].includes(h)) go(h);
+setSync(); if(!FB_CONFIG) applyPatches(); setCar(CAR);
+const h=(location.hash||'').slice(1); if(['charts','list','report','forecast'].includes(h)) go(h);
 initFirebase();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
