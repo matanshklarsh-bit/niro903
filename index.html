@@ -411,7 +411,7 @@ function byMonthCat(){
 
 /* ---------- render ---------- */
 let LIST_FILTER='all', LIST_N=40;
-function render(){ renderHome(); renderForecastHome(); if($('v-forecast').classList.contains('on')) renderForecast(); if($('v-charts').classList.contains('on')) renderCharts(); if($('v-list').classList.contains('on')) renderList(); if($('v-report').classList.contains('on')) renderReport(); }
+function render(){ renderHome(); renderForecastHome(); publishForecast(); if($('v-forecast').classList.contains('on')) renderForecast(); if($('v-charts').classList.contains('on')) renderCharts(); if($('v-list').classList.contains('on')) renderList(); if($('v-report').classList.contains('on')) renderReport(); }
 function catColor(c){ return css(c)||'#888'; }
 function itemHtml(e){
   const c=CATS[e.cat]||CATS.other; const col=catColor(e.cat);
@@ -644,6 +644,21 @@ const mname=k=>new Date(k+'-15').toLocaleDateString('he-IL',{month:'long',year:'
 function fcItemHtml(x){ const c=CATS[x.cat], col=catColor(x.cat);
   const when=new Date(x.date).toLocaleDateString('he-IL',{day:'numeric',month:'short',year:'2-digit'});
   return `<div class="it"><div class="ic" style="background:${col}22;color:${col}">${c.i}</div><div class="t"><b>${x.title}</b><small>${'בערך '+when} · ${x.sub}</small></div><div class="a">${ils(x.amount)}</div></div>`; }
+/* פרסום התשלומים הגדולים הצפויים (ביטוח, רישוי, טיפול, צמיגים) לאפליקציית התזרים.
+   רק התשלומים הגדולים: ההוצאות השוטפות (דלק, טעינה, אגרות, ליסינג) כבר נספרות בתזרים מהבנק ומהכרטיסים. */
+let lastPub='';
+function publishForecast(){
+  if(!fb||!user) return;
+  try{
+    const items=[];
+    for(const c of ['903','404']) withCar(c,forecast).items.forEach(x=>items.push({car:c,date:x.date,cat:x.cat,amount:Math.round(x.amount),title:x.title}));
+    items.sort((a,b)=>a.date<b.date?-1:1);
+    const json=JSON.stringify(items);
+    if(json===lastPub) return;
+    lastPub=json;
+    fb.setDoc(fb.doc(fb.db,'users',user.uid,'meta','forecast'),{items,updatedAt:new Date().toISOString()}).catch(e=>console.warn('publish forecast',e.code||e));
+  }catch(e){ console.warn('publish forecast',e); }
+}
 function renderForecastHome(){
   const f=forecastFor(CAR), lim=addDays(today(),60);
   const soon=f.items.filter(x=>x.date<=lim);
